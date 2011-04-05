@@ -14,7 +14,9 @@ class LocalizerWrapper(object):
 
     def edit_message(self, msgid, lang, translation):
         """ """
-        
+        # language existance test not present in Localizer:
+        if lang not in self.get_languages():
+            return
         # Add-by-edit functionality not present in Localizer:
         if not self.cat.message_exists(msgid):
             self.cat.gettext(msgid, lang, add=1)
@@ -28,7 +30,12 @@ class LocalizerWrapper(object):
 
     def gettext(self, msgid, lang, default=None):
         """Returns the corresponding translation of msgid in Catalog."""
-        return self.cat.gettext(msgid, lang, add=1, default=default)
+        # language existance test not present in Localizer:
+        if lang not in self.get_languages():
+            add = 0
+        else:
+            add = 1
+        return self.cat.gettext(msgid, lang, add=add, default=default)
 
     def get_languages(self):
         """Get available languages"""
