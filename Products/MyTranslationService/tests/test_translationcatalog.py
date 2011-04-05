@@ -94,4 +94,13 @@ class TranslationCatalogTest(unittest.TestCase):
 
 class LocalizerAdapterTest(NaayaTestCase, TranslationCatalogTest):
     def catalog_factory(self, **kw):
-        """ create, clean and return Localizer instance here"
+        """ create, clean and return Localizer instance here"""
+        catalog = LocalizerWrapper(self.portal)
+        # erase catalog
+        catalog.clear()
+        for lang in catalog.get_languages():
+            catalog.del_language(lang)
+        if kw.has_key('languages'):
+            for lang in kw['languages']:
+                catalog.add_language(lang)
+        return catalog
