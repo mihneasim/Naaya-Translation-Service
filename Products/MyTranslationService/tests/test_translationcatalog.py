@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 # Python imports
 import unittest
 from mock import patch
@@ -11,9 +12,9 @@ from Products.MyTranslationService.LocalizerWrapper import LocalizerWrapper
 
 
 class TranslationCatalogTest(unittest.TestCase):
-    
+
     catalog_factory = None # TBC
-    
+
     def test_clean_catalog_from_setup(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
         self.assertRaises(StopIteration, catalog.messages().next)
@@ -29,7 +30,7 @@ class TranslationCatalogTest(unittest.TestCase):
         catalog.edit_message('cat', 'de', 'Katze')
         cat_de = catalog.gettext('cat', 'de')
         self.assertEqual(catalog.gettext('cat', 'de'), 'Katze')
-    
+
     def test_del_message(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
         catalog.edit_message('water', 'en', 'water')
@@ -37,13 +38,13 @@ class TranslationCatalogTest(unittest.TestCase):
         catalog.del_message('water')
         self.assertEqual(catalog.gettext('water', 'en'), 'water')
         self.assertEqual(catalog.gettext('water', 'de'), 'water')
-    
+
     def test_default_behaviour_unspecified(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
         # returns msgid, since default not specified
         self.assertEqual(catalog.gettext('water', 'en'), 'water')
-        self.assertEqual(catalog.gettext('water' 'de'), 'water')
-    
+        self.assertEqual(catalog.gettext('water', 'de'), 'water')
+
     def test_default_behaviour_specified(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
         # return and set default as 'en' Translation
@@ -53,16 +54,17 @@ class TranslationCatalogTest(unittest.TestCase):
         # return default, but do not set it, since this is not 'en' lang
         self.assertEqual(catalog.gettext('water', 'de', 'Wasser'),'Wasser')
         self.assertEqual(catalog.gettext('water', 'de'), 'water')
-        
+
     def test_message_iteration(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
         catalog.gettext('cat', 'en')
         catalog.gettext('water', 'de')
         # test iteration, 'water' and 'cat' in catalog
         i = 0
+        all_msgs = catalog.messages()
         try:
             while True:
-                catalog.messages().next()
+                all_msgs.next()
                 i += 1
         except StopIteration:
             pass
@@ -76,14 +78,14 @@ class TranslationCatalogTest(unittest.TestCase):
 
     def test_language_get(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
-        self.assertEqual(['en', 'de'] in catalog.get_languages)
-        
+        self.assertEqual(('en', 'de'), tuple(catalog.get_languages()))
+
     def test_language_add(self):
         catalog = self.catalog_factory(languages=('en', 'de'))
         catalog.add_language('fr')
         catalog.edit_message('cat', 'fr', 'chat')
         self.assertEqual(catalog.gettext('cat', 'fr'), 'chat')
-        sefl.assertTrue('fr' in catalog.get_languages)
+        self.assertTrue('fr' in catalog.get_languages())
 
     def test_language_del(self):
         catalog = self.catalog_factory(languages=('en', 'de'))

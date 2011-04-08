@@ -2,8 +2,8 @@
 from zope.interface import Interface
 
 class ITranslationCatalog(Interface):
-    
-  
+
+
     def edit_message(msgid, lang, translation):
         """ """
 
@@ -15,10 +15,10 @@ class ITranslationCatalog(Interface):
 
     def get_languages():
         """Get available languages"""
-    
+
     def add_language(lang):
         """Add language"""
-    
+
     def del_language(lang):
         """Delete language with corresponding messages"""
 
