@@ -1,5 +1,17 @@
 <configure xmlns="http://namespaces.zope.org/zope">
 
+<adapter
+   factory=".LocalizerWrapper.TranslationDomainAdapter"
+   provides="zope.i18n.interfaces.ITranslationDomain"
+   for=".interfaces.ITranslationCatalog"
+   />
+<!--
+<utility
+   factory=".LocalizerWrapper.AdaptedLocalizer"
+   provides="zope.i18n.interfaces.ITranslationDomain"
+   name="default"
+   />
+-->
 <utility
    factory=".MyTranslationService.MyTranslator"
    provides="zope.i18n.interfaces.ITranslationDomain"

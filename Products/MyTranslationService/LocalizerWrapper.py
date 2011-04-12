@@ -1,9 +1,13 @@
 
 # Zope imports
 from zope.interface import implements
+from zope.i18n.interfaces import ITranslationDomain
+from zope.i18n import interpolate
+from zope.component import adapts
 
 # Product imports
 from Products.MyTranslationService.interfaces import ITranslationCatalog
+from Negotiator import negotiate
 
 
 class LocalizerWrapper(object):
@@ -72,3 +76,30 @@ class LocalizerWrapper(object):
         """
         for msgid in self.cat._messages.keys():
             yield msgid
+
+class TranslationDomainAdapter(object):
+    """ Using ITranslationCatalog, provides ITranslationDomain (zope.i18n) """
+
+    def __init__(self, context):
+        self.context = context
+
+    def translate(self, msgid, mapping=None, context=None, target_language=None,
+                  default=None):
+        """
+        * `context` is used in negotiaton - IUserPreferredLanguages(context)
+        * `mapping` requires interpolation process
+        """
+        # gettext(msgid, lang, default=None)
+        if target_language is None:
+            target_language = negotiate(self.context.get_languages(), context)
+        text = self.context.gettext(msgid, target_language, default)
+        return interpolate(text, mapping)
+
+def register_adapted_localizer(portal, domain='default'):
+    """ Factory for ITranslationCatalog as ITranslationDomain;
+        Needs to be registered with local site manager (depends on portal)
+    """
+    localizer = LocalizerWrapper(portal)
+    lsm = portal.getSiteManager()
+    lsm.registerUtility(ITranslationDomain(localizer), ITranslationDomain,
+                        domain)
