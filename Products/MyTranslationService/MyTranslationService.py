@@ -26,8 +26,14 @@ class MyTranslator(MyTranslationService):
                   default=None):
 
         lsm = context['PARENTS'][0].getSite().getSiteManager()
+
+        # for testing purpuses only:
+        from LocalizerWrapper import register_adapted_localizer
+        register_adapted_localizer(context['PARENTS'][0].getSite())
+
         ts = lsm.queryUtility(ITranslationDomain, 'default')
-        return ts.translate(msgid, mapping, context, target_language, default)
+        return (ts.translate(msgid, mapping, context, target_language, default)
+                + '[itd]')
         # OLD, TEST STUFF
         #lang = negotiate(self.available_languages, context)
         #return 'my-translation(%s)' % lang

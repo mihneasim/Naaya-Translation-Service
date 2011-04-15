@@ -1,5 +1,6 @@
 # Zope imports
 from zope.interface import Interface
+from zope.i18n.interfaces import ILanguageAvailability
 
 class ITranslationCatalog(Interface):
 
@@ -29,3 +30,16 @@ class ITranslationCatalog(Interface):
         """
         Returns a generator used for catalog entries iteration.
         """
+
+class ILanguageManagement(ILanguageAvailability):
+    
+    """ILanguageAvailability only provides method for reading available
+    languages. We also need an api to manage them.
+    
+    Obs: the order of languages is the adding order, no api for ordering"""
+    
+    def addAvailableLanguage(lang):
+        """Adds available language in portal"""
+
+    def delAvailableLanguage(lang):
+        """Removes a currently available language in portal"""

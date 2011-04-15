@@ -1,20 +1,26 @@
 
 # Zope imports
 from zope.interface import implements
-from zope.i18n.interfaces import ITranslationDomain
+from zope.i18n.interfaces import (ITranslationDomain,
+                                  IModifiableUserPreferredLanguages)
 from zope.i18n import interpolate
 from zope.component import adapts
 
 # Product imports
-from Products.MyTranslationService.interfaces import ITranslationCatalog
+from Products.MyTranslationService.interfaces import (ITranslationCatalog,
+                                                      ILanguageManagement)
 from Negotiator import negotiate
 
 
 class LocalizerWrapper(object):
-    implements(ITranslationCatalog)
+    implements(ITranslationCatalog, ILanguageManagement,
+               IModifiableUserPreferredLanguages)
 
     def __init__(self, portal):
         self.cat = portal.getPortalTranslations()
+        self.loc = portal.getLocalizer()
+
+    ### ITranslationCatalog
 
     def edit_message(self, msgid, lang, translation):
         """ """
@@ -77,6 +83,25 @@ class LocalizerWrapper(object):
         for msgid in self.cat._messages.keys():
             yield msgid
 
+### ILanguageManagement
+
+    def getAvailableLanguages(self):
+        """Return a sequence of language tags for available languages
+        """
+        return tuple(self.loc.get_supported_languages())
+
+    def addAvailableLanguage(self, lang):
+        """Adds available language in portal"""
+        self.loc.add_language(lang)
+
+    def delAvailableLanguage(self, lang):
+        # ValueError if last language **not present in Localizer**
+        crt = self.loc.get_supported_languages()
+        if len(crt) == 1 and crt[0] == lang:
+            raise ValueError
+        else:
+            self.loc.del_language(lang)
+
 class TranslationDomainAdapter(object):
     """ Using ITranslationCatalog, provides ITranslationDomain (zope.i18n) """
 
@@ -103,3 +128,7 @@ def register_adapted_localizer(portal, domain='default'):
     lsm = portal.getSiteManager()
     lsm.registerUtility(ITranslationDomain(localizer), ITranslationDomain,
                         domain)
+    lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
+    ### TODO: ILanguageAvailability is inherited by ILanguageManagement,
+    # will querying an utility for it return localizer?
+    lsm.registerUtility(localizer, ILanguageManagement)
