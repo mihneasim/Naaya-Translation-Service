@@ -13,7 +13,7 @@
    />
 -->
 <utility
-   factory=".MyTranslationService.MyTranslator"
+   factory=".Translator"
    provides="zope.i18n.interfaces.ITranslationDomain"
    name="default"
    />

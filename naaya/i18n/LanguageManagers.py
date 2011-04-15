@@ -34,7 +34,7 @@ class PortalLanguageManager(object):
 
     implements(ILanguageAvailability)
     # by inheritance, also ILanguageAvailability
-    
+
     def __init__(self):
         self.portal_languages = ('en', )
 

@@ -9,12 +9,12 @@ from zope.component import queryUtility
 # Product imports
 from Negotiator import negotiate
 
-class MyTranslationService(object):
+class TranslationService(object):
     
     # mocking
     available_languages = ('en', 'de', )
 
-class MyTranslator(MyTranslationService):
+class Translator(TranslationService):
     
     implements(ITranslationDomain)
 
@@ -28,8 +28,8 @@ class MyTranslator(MyTranslationService):
         lsm = context['PARENTS'][0].getSite().getSiteManager()
 
         # for testing purpuses only:
-        from LocalizerWrapper import register_adapted_localizer
-        register_adapted_localizer(context['PARENTS'][0].getSite())
+        #from LocalizerWrapper import register_adapted_localizer
+        #register_adapted_localizer(context['PARENTS'][0].getSite())
 
         ts = lsm.queryUtility(ITranslationDomain, 'default')
         return (ts.translate(msgid, mapping, context, target_language, default)

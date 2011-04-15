@@ -32,12 +32,12 @@ class ITranslationCatalog(Interface):
         """
 
 class ILanguageManagement(ILanguageAvailability):
-    
+
     """ILanguageAvailability only provides method for reading available
     languages. We also need an api to manage them.
-    
+
     Obs: the order of languages is the adding order, no api for ordering"""
-    
+
     def addAvailableLanguage(lang):
         """Adds available language in portal"""
 

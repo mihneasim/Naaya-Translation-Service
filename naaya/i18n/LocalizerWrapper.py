@@ -7,9 +7,11 @@ from zope.i18n import interpolate
 from zope.component import adapts
 
 # Product imports
-from Products.MyTranslationService.interfaces import (ITranslationCatalog,
-                                                      ILanguageManagement)
+from naaya.i18n.interfaces import (ITranslationCatalog, ILanguageManagement)
 from Negotiator import negotiate
+
+# Localizer imports
+from Products.Localizer.patches import get_request
 
 
 class LocalizerWrapper(object):
@@ -18,7 +20,7 @@ class LocalizerWrapper(object):
 
     def __init__(self, portal):
         self.cat = portal.getPortalTranslations()
-        self.loc = portal.getLocalizer()
+        self.loc = portal.getActualOldLocalizer()
 
     ### ITranslationCatalog
 
@@ -102,6 +104,27 @@ class LocalizerWrapper(object):
         else:
             self.loc.del_language(lang)
 
+# IModifiableUserPreferredLanguages
+    def getPreferredLanguages(self):
+        """Return a sequence of user preferred languages.
+
+        The sequence is sorted in order of quality, with the most preferred
+        languages first.
+        """
+        # TODO: localizer only returns one language
+        return tuple(self.loc.get_selected_language())
+
+    def setPreferredLanguages(self, languages):
+        """Set a sequence of user preferred languages.
+
+        The sequence should be sorted in order of quality, with the most
+        preferred languages first.
+        """
+        # TODO: localizer only sets one language (in cookie)
+
+        self.loc.REQUEST = get_request()
+        self.loc.changeLanguage(languages[0])
+
 class TranslationDomainAdapter(object):
     """ Using ITranslationCatalog, provides ITranslationDomain (zope.i18n) """
 
@@ -130,5 +153,5 @@ def register_adapted_localizer(portal, domain='default'):
                         domain)
     lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
     ### TODO: ILanguageAvailability is inherited by ILanguageManagement,
-    # will querying an utility for it return localizer?
+    # will querying an utility for ILanguageAvailability return localizer?
     lsm.registerUtility(localizer, ILanguageManagement)

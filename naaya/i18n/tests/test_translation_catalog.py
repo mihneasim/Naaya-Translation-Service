@@ -7,8 +7,8 @@ from mock import patch
 from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
 
 # Project imports
-from Products.MyTranslationService.interfaces import ITranslationCatalog
-from Products.MyTranslationService.LocalizerWrapper import LocalizerWrapper
+from naaya.i18n.interfaces import ITranslationCatalog
+from naaya.i18n.LocalizerWrapper import LocalizerWrapper
 
 
 class TranslationCatalogTest(unittest.TestCase):
