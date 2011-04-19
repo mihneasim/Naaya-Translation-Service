@@ -12,6 +12,7 @@ from Negotiator import negotiate
 
 # Localizer imports
 from Products.Localizer.patches import get_request
+from Products.Localizer.utils import lang_negotiator
 
 
 class LocalizerWrapper(object):
@@ -20,7 +21,7 @@ class LocalizerWrapper(object):
 
     def __init__(self, portal):
         self.cat = portal.getPortalTranslations()
-        self.loc = portal.getActualOldLocalizer()
+        self.loc = portal.getLocalizer()
 
     ### ITranslationCatalog
 
@@ -138,7 +139,8 @@ class TranslationDomainAdapter(object):
         """
         # gettext(msgid, lang, default=None)
         if target_language is None:
-            target_language = negotiate(self.context.get_languages(), context)
+            #target_language = negotiate(self.context.get_languages(), context)
+            target_language = lang_negotiator(self.context.get_languages())
         text = self.context.gettext(msgid, target_language, default)
         return interpolate(text, mapping)
 
@@ -150,7 +152,7 @@ def register_adapted_localizer(portal, domain='default'):
     lsm = portal.getSiteManager()
     lsm.registerUtility(ITranslationDomain(localizer), ITranslationDomain,
                         domain)
-    lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
+    #lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
     ### TODO: ILanguageAvailability is inherited by ILanguageManagement,
     # will querying an utility for ILanguageAvailability return localizer?
-    lsm.registerUtility(localizer, INyLanguageManagement)
+    #lsm.registerUtility(localizer, INyLanguageManagement)
