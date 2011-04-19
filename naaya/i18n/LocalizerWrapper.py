@@ -7,7 +7,7 @@ from zope.i18n import interpolate
 from zope.component import adapts
 
 # Product imports
-from naaya.i18n.interfaces import (ITranslationCatalog, ILanguageManagement)
+from naaya.i18n.interfaces import (INyTranslationCatalog, INyLanguageManagement)
 from Negotiator import negotiate
 
 # Localizer imports
@@ -15,7 +15,7 @@ from Products.Localizer.patches import get_request
 
 
 class LocalizerWrapper(object):
-    implements(ITranslationCatalog, ILanguageManagement,
+    implements(INyTranslationCatalog, INyLanguageManagement,
                IModifiableUserPreferredLanguages)
 
     def __init__(self, portal):
@@ -104,7 +104,8 @@ class LocalizerWrapper(object):
         else:
             self.loc.del_language(lang)
 
-# IModifiableUserPreferredLanguages
+### IModifiableUserPreferredLanguages
+
     def getPreferredLanguages(self):
         """Return a sequence of user preferred languages.
 
@@ -121,8 +122,6 @@ class LocalizerWrapper(object):
         preferred languages first.
         """
         # TODO: localizer only sets one language (in cookie)
-
-        self.loc.REQUEST = get_request()
         self.loc.changeLanguage(languages[0])
 
 class TranslationDomainAdapter(object):
@@ -154,4 +153,4 @@ def register_adapted_localizer(portal, domain='default'):
     lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
     ### TODO: ILanguageAvailability is inherited by ILanguageManagement,
     # will querying an utility for ILanguageAvailability return localizer?
-    lsm.registerUtility(localizer, ILanguageManagement)
+    lsm.registerUtility(localizer, INyLanguageManagement)

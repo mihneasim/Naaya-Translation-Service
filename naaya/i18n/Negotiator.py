@@ -144,7 +144,7 @@ class CookieAccept:
     def getAccepted(self, request, kind='language'):
         if not hasattr(request, 'cookies'):
             return ()
-        language = request.cookies.get('pts_language', None)
+        language = request.cookies.get('LOCALIZER_LANGUAGE', None) # was pts_language
         if language:
             if type(language) is types.TupleType:
                 return language

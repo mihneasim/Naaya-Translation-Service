@@ -3,7 +3,7 @@
 <adapter
    factory=".LocalizerWrapper.TranslationDomainAdapter"
    provides="zope.i18n.interfaces.ITranslationDomain"
-   for=".interfaces.ITranslationCatalog"
+   for=".interfaces.INyTranslationCatalog"
    />
 <!--
 <utility

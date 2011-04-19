@@ -2,7 +2,7 @@
 from zope.interface import Interface
 from zope.i18n.interfaces import ILanguageAvailability
 
-class ITranslationCatalog(Interface):
+class INyTranslationCatalog(Interface):
 
 
     def edit_message(msgid, lang, translation):
@@ -31,7 +31,7 @@ class ITranslationCatalog(Interface):
         Returns a generator used for catalog entries iteration.
         """
 
-class ILanguageManagement(ILanguageAvailability):
+class INyLanguageManagement(ILanguageAvailability):
 
     """ILanguageAvailability only provides method for reading available
     languages. We also need an api to manage them.

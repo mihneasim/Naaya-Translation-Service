@@ -25,13 +25,13 @@ class Translator(TranslationService):
     def translate(self, msgid, mapping=None, context=None, target_language=None,
                   default=None):
 
-        lsm = context['PARENTS'][0].getSite().getSiteManager()
+        site = context['PARENTS'][0].getSite()
 
         # for testing purpuses only:
         #from LocalizerWrapper import register_adapted_localizer
         #register_adapted_localizer(context['PARENTS'][0].getSite())
 
-        ts = lsm.queryUtility(ITranslationDomain, 'default')
+        ts = queryUtility(ITranslationDomain, 'default', context=site)
         return (ts.translate(msgid, mapping, context, target_language, default)
                 + '[itd]')
         # OLD, TEST STUFF
