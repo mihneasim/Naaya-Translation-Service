@@ -5,6 +5,7 @@ from zope.i18n.interfaces import (ITranslationDomain,
                                   IModifiableUserPreferredLanguages)
 from zope.i18n import interpolate
 from zope.component import adapts
+from Persistence import Persistent
 
 # Product imports
 from naaya.i18n.interfaces import (INyTranslationCatalog, INyLanguageManagement)
@@ -15,7 +16,7 @@ from Products.Localizer.patches import get_request
 from Products.Localizer.utils import lang_negotiator
 
 
-class LocalizerWrapper(object):
+class LocalizerWrapper(Persistent):
     implements(INyTranslationCatalog, INyLanguageManagement,
                IModifiableUserPreferredLanguages)
 
