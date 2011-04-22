@@ -7,11 +7,11 @@ from mock import patch
 from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
 
 # Project imports
-from naaya.i18n.interfaces import ITranslationCatalog
+from naaya.i18n.interfaces import INyTranslationCatalog
 from naaya.i18n.LocalizerWrapper import LocalizerWrapper
 
 
-class TranslationCatalogTest(unittest.TestCase):
+class _TranslationCatalogTest(unittest.TestCase):
 
     catalog_factory = None # TBC
 
@@ -94,7 +94,7 @@ class TranslationCatalogTest(unittest.TestCase):
         self.assertFalse('de' in catalog.get_languages())
         self.assertEqual(catalog.gettext('dog', 'de'), 'dog')
 
-class LocalizerAdapterTest(NaayaTestCase, TranslationCatalogTest):
+class LocalizerAdapterTest(NaayaTestCase, _TranslationCatalogTest):
     def catalog_factory(self, **kw):
         """ create, clean and return Localizer instance here"""
         catalog = LocalizerWrapper(self.portal)

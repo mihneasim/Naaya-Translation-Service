@@ -153,7 +153,5 @@ def register_adapted_localizer(portal, domain='default'):
     lsm = portal.getSiteManager()
     lsm.registerUtility(ITranslationDomain(localizer), ITranslationDomain,
                         domain)
-    #lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
-    ### TODO: ILanguageAvailability is inherited by ILanguageManagement,
-    # will querying an utility for ILanguageAvailability return localizer?
-    #lsm.registerUtility(localizer, INyLanguageManagement)
+    lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
+    lsm.registerUtility(localizer, INyLanguageManagement)

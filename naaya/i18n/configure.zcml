@@ -1,21 +1,24 @@
-<configure xmlns="http://namespaces.zope.org/zope">
+<configure xmlns:naaya="http://namespaces.zope.org/zope"
+           xmlns:zope="http://namespaces.zope.org/zope"
+           xmlns:zcml="http://namespaces.zope.org/zcml">
 
-<adapter
-   factory=".LocalizerWrapper.TranslationDomainAdapter"
-   provides="zope.i18n.interfaces.ITranslationDomain"
-   for=".interfaces.INyTranslationCatalog"
-   />
-<!--
-<utility
-   factory=".LocalizerWrapper.AdaptedLocalizer"
-   provides="zope.i18n.interfaces.ITranslationDomain"
-   name="default"
-   />
--->
-<utility
-   factory=".Translator"
-   provides="zope.i18n.interfaces.ITranslationDomain"
-   name="default"
-   />
+   <naaya:adapter
+      factory=".LocalizerWrapper.TranslationDomainAdapter"
+      provides="zope.i18n.interfaces.ITranslationDomain"
+      for=".interfaces.INyTranslationCatalog"
+      />
+   
+   <naaya:utility
+      factory=".Translator"
+      provides="zope.i18n.interfaces.ITranslationDomain"
+      name="default"
+      />
+   
+   <configure zcml:condition="installed Products.naayaUpdater">
+         <naaya:utility name="register_utility_itranslationdomain.update"
+             provides="Products.naayaUpdater.interfaces.IUpdateScript"
+             component=".updates.RegisterTranslationUtilities"
+             permission="zope2.ViewManagementScreens" />
+   </configure>
 
 </configure>

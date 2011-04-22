@@ -10,7 +10,7 @@ from zope.i18n.interfaces import IModifiableUserPreferredLanguages
 from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
 
 # Project imports
-from naaya.i18n.interfaces import ILanguageManagement
+from naaya.i18n.interfaces import INyLanguageManagement
 from naaya.i18n.LocalizerWrapper import register_adapted_localizer
 
 
@@ -21,8 +21,7 @@ class LanguageManagersTest(NaayaTestCase):
         register_adapted_localizer(self.portal)
         lsm = self.portal.getSiteManager()
         self.user_langs = lsm.queryUtility(IModifiableUserPreferredLanguages)
-        self.portal_langs = lsm.queryUtility(ILanguageManagement)
-        #import pdb; pdb.set_trace()
+        self.portal_langs = lsm.queryUtility(INyLanguageManagement)
 
     def test_set_user_preferred(self):
         self.user_langs.setPreferredLanguages(('fr', 'en'))
