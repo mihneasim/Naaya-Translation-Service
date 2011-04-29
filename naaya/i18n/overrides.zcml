@@ -1,0 +1,10 @@
+<configure xmlns:naaya="http://namespaces.zope.org/zope"
+           xmlns:zope="http://namespaces.zope.org/zope"
+           xmlns:zcml="http://namespaces.zope.org/zcml">
+
+   <naaya:utility
+      factory=".Negotiator.Negotiator"
+      provides="zope.i18n.interfaces.INegotiator"
+      />
+
+</configure>

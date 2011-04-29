@@ -9,7 +9,6 @@ from Persistence import Persistent
 
 # Product imports
 from naaya.i18n.interfaces import (INyTranslationCatalog, INyLanguageManagement)
-from Negotiator import negotiate
 
 # Localizer imports
 from Products.Localizer.patches import get_request
@@ -18,7 +17,7 @@ from Products.Localizer.utils import lang_negotiator
 
 class LocalizerWrapper(Persistent):
     implements(INyTranslationCatalog, INyLanguageManagement,
-               IModifiableUserPreferredLanguages)
+               IModifiableUserPreferredLanguages, ITranslationDomain)
 
     def __init__(self, portal):
         self.cat = portal.getPortalTranslations()
@@ -36,7 +35,7 @@ class LocalizerWrapper(Persistent):
             self.cat.gettext(msgid, lang, add=1)
 
         self.cat.message_edit(msgid, lang, translation,
-                              note="Note not present in ITranslationCatalog api")
+                              note="`Note` not present in INyTranslationCatalog")
 
     def del_message(self, msgid):
         """ """
@@ -126,32 +125,14 @@ class LocalizerWrapper(Persistent):
         # TODO: localizer only sets one language (in cookie)
         self.loc.changeLanguage(languages[0])
 
-class TranslationDomainAdapter(object):
-    """ Using ITranslationCatalog, provides ITranslationDomain (zope.i18n) """
-
-    def __init__(self, context):
-        self.context = context
-
     def translate(self, msgid, mapping=None, context=None, target_language=None,
                   default=None):
         """
         * `context` is used in negotiaton - IUserPreferredLanguages(context)
         * `mapping` requires interpolation process
         """
-        # gettext(msgid, lang, default=None)
         if target_language is None:
             #target_language = negotiate(self.context.get_languages(), context)
-            target_language = lang_negotiator(self.context.get_languages())
-        text = self.context.gettext(msgid, target_language, default)
+            target_language = lang_negotiator(self.get_languages())
+        text = self.gettext(msgid, target_language, default)
         return interpolate(text, mapping)
-
-def register_adapted_localizer(portal, domain='default'):
-    """ Factory for ITranslationCatalog as ITranslationDomain;
-        Needs to be registered with local site manager (depends on portal)
-    """
-    localizer = LocalizerWrapper(portal)
-    lsm = portal.getSiteManager()
-    lsm.registerUtility(ITranslationDomain(localizer), ITranslationDomain,
-                        domain)
-    lsm.registerUtility(localizer, IModifiableUserPreferredLanguages)
-    lsm.registerUtility(localizer, INyLanguageManagement)
