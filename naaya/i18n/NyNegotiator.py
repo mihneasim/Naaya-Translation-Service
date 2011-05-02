@@ -2,7 +2,7 @@ from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
 from Persistence import Persistent
 
-class Negotiator(Persistent):
+class NyNegotiator(Persistent):
     implements(INegotiator)
 
     def __init__(self, cookie_id='LOCALIZER_LANGUAGE', policy='browser'):    

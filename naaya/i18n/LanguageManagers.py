@@ -1,11 +1,14 @@
+# Python imports
+import os.path
 
 # Zope imports
 from zope.interface import implements
-from zope.i18n.interfaces import IModifiableUserPreferredLanguages
+from zope.i18n.interfaces import (IModifiableUserPreferredLanguages,
+                                  ILanguageAvailability)
 from Persistence import Persistent
 
 # Project imports
-from interfaces import ILanguageManagement
+from interfaces import INyLanguageManagement
 
 
 class NyLanguageManager(Persistent):
@@ -15,32 +18,43 @@ class NyLanguageManager(Persistent):
 
     def reset(self):
         self.languages = {}
-        filename = get_abspath(globals(), 'languages.txt')
+        cwd = __file__.rsplit(os.path.sep, 1)[0]
+        filename = os.path.join(cwd, 'languages.txt')
         for line in open(filename).readlines():
             line = line.strip()
             if line and line[0] != '#':
                 code, name = line.split(' ', 1)
-                languages[code] = name
+                self.languages[code] = name
         
         # Builds a sorted list with the languages code and name
-        language_codes = languages.keys()
-        language_codes.sort()
-        self.langs = [ {'code': x,
-                        'name': self.languages[x]} for x in language_codes ]
-
-    def add_language(self, code, name):
-        self.languages[code] = name
         language_codes = self.languages.keys()
         language_codes.sort()
         self.langs = [ {'code': x,
                         'name': self.languages[x]} for x in language_codes ]
 
+    def add_language(self, code, name):
+        """
+        Returns code of added language, None if code already exists
+        """
+        if self.languages.has_key(code):
+            return None
+        self.languages[code] = name
+        language_codes = self.languages.keys()
+        language_codes.sort()
+        self.langs = [ {'code': x,
+                        'name': self.languages[x]} for x in language_codes ]
+        return code
+
     def del_language(self, code):
-        if code not in self.langs.keys():
-            return
+        """
+        Returns deleted language code, None if language code not found
+        """
+        if code not in self.languages.keys():
+            return None
         name = self.languages[code]
         del self.languages[code]
         self.langs.pop(self.langs.index({'code': code, 'name': name}))
+        return code
 
     def get_language_name(self, code):
         """
@@ -87,7 +101,7 @@ class NyPortalLanguageManager(Persistent):
     def addAvailableLanguage(self, lang):
         """Adds available language in portal"""
         if lang not in self.portal_languages:
-            self.portal_languages += lang
+            self.portal_languages += (lang, )
 
     def delAvailableLanguage(self, lang):
         new_list = []

@@ -2,8 +2,6 @@
            xmlns:zope="http://namespaces.zope.org/zope"
            xmlns:zcml="http://namespaces.zope.org/zcml">
 
-   <includeOverrides file="overrides.zcml" />
-
    <naaya:utility
       factory=".NyLocalizerTranslator"
       provides="zope.i18n.interfaces.ITranslationDomain"
@@ -11,6 +9,8 @@
       />
 
 <!--
+   <includeOverrides file="overrides.zcml" />
+
    <naaya:utility
       factory=".NyTranslator"
       provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"
