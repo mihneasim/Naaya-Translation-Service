@@ -37,24 +37,22 @@ class NyLanguageManager(Persistent):
         Returns code of added language, None if code already exists
         """
         if self.languages.has_key(code):
-            return None
+            raise KeyError("`%s` language code already exists" % code)
         self.languages[code] = name
         language_codes = self.languages.keys()
         language_codes.sort()
         self.langs = [ {'code': x,
                         'name': self.languages[x]} for x in language_codes ]
-        return code
 
     def del_language(self, code):
         """
         Returns deleted language code, None if language code not found
         """
         if code not in self.languages.keys():
-            return None
+            raise KeyError("`%s` language code doesn't exist" % code)
         name = self.languages[code]
         del self.languages[code]
         self.langs.pop(self.langs.index({'code': code, 'name': name}))
-        return code
 
     def get_language_name(self, code):
         """
@@ -62,30 +60,6 @@ class NyLanguageManager(Persistent):
         """
         return self.languages.get(code, '???')
     
-class NyBrowserLanguageManager(Persistent):
-
-    implements(IModifiableUserPreferredLanguages)
-    # inherits IUserPreferredLanguages
-
-    def __init__(self):
-        self.client_languages = ('en', )
-
-    def getPreferredLanguages(self):
-        """Return a sequence of user preferred languages.
-
-        The sequence is sorted in order of quality, with the most preferred
-        languages first.
-        """
-        return self.client_languages
-
-    def setPreferredLanguages(self, languages):
-        """Set a sequence of user preferred languages.
-
-        The sequence should be sorted in order of quality, with the most
-        preferred languages first.
-        """
-        self.client_languages = tuple(languages)
-
 class NyPortalLanguageManager(Persistent):
 
     implements(ILanguageAvailability)

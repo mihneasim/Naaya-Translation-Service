@@ -12,22 +12,24 @@ class NyNegotiator(Persistent):
     def __init__(self, cookie_id='LOCALIZER_LANGUAGE', policy='browser'):    
         """
             * `cookie_id` is a key looked up in cookies/querystrings
-            * `policy` can be browser, url, path, cookie, or any combination
-            set as 'url --> path --> browser', default 'browser'
+            * `policy` can be 'browser', 'url', 'path', 'cookie',
+            or any combination as a list of priorities
         """
-        self.sep = ' --> '
         self.cookie_id = cookie_id
         self.set_policy(policy)
 
     def set_policy(self, policy):
-        options = policy.split(self.sep)
-        for opt in options:
+        if isinstance(policy, str):
+            policy = (policy, )
+        else:
+            policy = tuple(policy)
+        for opt in policy:
             if opt not in ('browser', 'url', 'path', 'cookie'):
                 raise ValueError('Invalid component for policy: "%s"' % opt)
         self.policy = policy
 
     def _get_cache_key(self, available, client_langs):
-        return (self.policy + '/' + repr(tuple(available)) +
+        return (','.join(self.policy) + '/' + ','.join(available) +
                 '/' + repr(client_langs))
 
     def _update_cache(self, cache_key, lang, request):
@@ -56,7 +58,6 @@ class NyNegotiator(Persistent):
         for x in [av for av in available if av.find("-") > -1]:
             secondary[x.split("-", 1)[0]] = x
 
-        policy_list = self.policy.split(self.sep)
         AcceptLanguage = ''
         try:
             AcceptLanguage = request['AcceptLanguage']
@@ -83,7 +84,7 @@ class NyNegotiator(Persistent):
         if cached_value is not None and cached_value in available:
             return cached_value
 
-        for policy in policy_list:
+        for policy in self.policy:
             lang = client_langs[policy]
             if lang in available:
                 self._update_cache(key, lang, request)
@@ -96,7 +97,5 @@ class NyNegotiator(Persistent):
                 # if xx-yy not found, but xx-zz is available, return xx-zz
                 elif first_code in secondary.keys():
                     return secondary[first_code]
-                
-            
-            
+
         return available[0]

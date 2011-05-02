@@ -29,7 +29,7 @@ class NegotiatorTestSuite(NaayaTestCase):
                         'cookie': 'es',
                         'url': 'fr',
                         }
-        self.negotiator.set_policy('browser --> path --> cookie --> url')
+        self.negotiator.set_policy(['browser', 'path', 'cookie', 'url'])
 
         key = self.negotiator._get_cache_key(('bg', 'fr'), client_langs)
         miss = self.negotiator._query_cache(key, self.req)
@@ -54,7 +54,6 @@ class NegotiatorTestSuite(NaayaTestCase):
         result = self.negotiator.getLanguage(('en', 'es', 'fr'), self.req)
         self.assertEqual(result, 'es')
 
-
     def test_negotiate_browser(self):
         self.negotiator.set_policy('browser')
         result = self.negotiator.getLanguage(('en', 'pt_BR', 'fr'), self.req)
@@ -71,7 +70,7 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.assertEqual(result, 'pt')
 
     def test_negotiate_priorities(self):
-        self.negotiator.set_policy('cookie --> browser --> url')
+        self.negotiator.set_policy(('cookie', 'browser', 'url'))
         self.req.cookies[self.cookie_id] = 'bg' # fails
         self.req['AcceptLanguage'] = 'es' # fails
         self.req.form[self.cookie_id] = 'de' # hits
