@@ -1,3 +1,7 @@
+# Python imports
+import re
+
+# Zope imports
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
 from Persistence import Persistent
@@ -11,11 +15,20 @@ class NyNegotiator(Persistent):
             * `policy` can be browser, url, path, cookie, or any combination
             set as 'url --> path --> browser', default 'browser'
         """
+        self.sep = ' --> '
         self.cookie_id = cookie_id
+        self.set_policy(policy)
+
+    def set_policy(self, policy):
+        options = policy.split(self.sep)
+        for opt in options:
+            if opt not in ('browser', 'url', 'path', 'cookie'):
+                raise ValueError('Invalid component for policy: "%s"' % opt)
         self.policy = policy
 
     def _get_cache_key(self, available, client_langs):
-        return self.policy + '/' + available + '/' + repr(client_langs)
+        return (self.policy + '/' + repr(tuple(available)) +
+                '/' + repr(client_langs))
 
     def _update_cache(self, cache_key, lang, request):
         if not request.has_key(self.cookie_id + '_cache'):
@@ -30,12 +43,23 @@ class NyNegotiator(Persistent):
         else:
             return None
 
+    def normalize_code(self, code):
+        not_letter = re.compile(r'[^a-z]+')
+        return re.sub(not_letter, '-', code.lower())
+
+    # INegotiator interface:
     def getLanguage(self, available, request):
         """Returns the language dependent on the policy."""
-        policy_list = self._policy.split(' --> ')
+        available = map(self.normalize_code, available)
+        # here we keep {'xx': 'xx-zz'} for xx-zz, for fallback cases
+        secondary = {}
+        for x in [av for av in available if av.find("-") > -1]:
+            secondary[x.split("-", 1)[0]] = x
+
+        policy_list = self.policy.split(self.sep)
         AcceptLanguage = ''
         try:
-            AcceptLanguage = REQUEST['AcceptLanguage']
+            AcceptLanguage = request['AcceptLanguage']
         except KeyError:
             pass
         cookie = request.cookies.get(self.cookie_id, '')
@@ -47,10 +71,10 @@ class NyNegotiator(Persistent):
         else:
             path = ''
 
-        client_langs = {'browser': AcceptLanguage,
-                        'url': url,
-                        'path': path,
-                        'cookie': cookie}
+        client_langs = {'browser': self.normalize_code(AcceptLanguage),
+                        'url': self.normalize_code(url),
+                        'path': self.normalize_code(path),
+                        'cookie': self.normalize_code(cookie)}
 
         # compute place in cache and check cache
         key = self._get_cache_key(available, client_langs)
@@ -64,4 +88,15 @@ class NyNegotiator(Persistent):
             if lang in available:
                 self._update_cache(key, lang, request)
                 return lang
+            elif lang.find("-") > -1:
+                first_code = lang.split("-", 1)[0]
+                # if xx-yy not found, but xx is available, return xx
+                if first_code in available:
+                    return first_code
+                # if xx-yy not found, but xx-zz is available, return xx-zz
+                elif first_code in secondary.keys():
+                    return secondary[first_code]
+                
+            
+            
         return available[0]

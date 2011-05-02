@@ -1,9 +1,7 @@
-<configure xmlns:naaya="http://namespaces.zope.org/zope"
-           xmlns:zope="http://namespaces.zope.org/zope"
-           xmlns:zcml="http://namespaces.zope.org/zcml">
+<configure xmlns="http://namespaces.zope.org/zope">
 
-   <naaya:utility
-      factory=".Negotiator.Negotiator"
+   <utility
+      factory=".NyNegotiator.NyNegotiator"
       provides="zope.i18n.interfaces.INegotiator"
       />
 

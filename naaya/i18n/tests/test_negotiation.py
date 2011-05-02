@@ -16,28 +16,52 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.req['TraversalRequestNameStack'] = ['de', ]
         self.req.form[self.cookie_id] = 'fr'
 
+    def test_normalize_code(self):
+        sets = [('pt-br', 'pt-br'), ('en', 'en'), ('ro_RO', 'ro-ro'),
+                ('PT BR', 'pt-br'), ('pt - br', 'pt-br'),
+                ('sk-Cyrillic', 'sk-cyrillic')]
+        for (input, expected) in sets:
+            self.assertEqual(self.negotiator.normalize_code(input), expected)
+
+    def test_negotiation_cache(self):
+        client_langs = {'browser': 'pt-br',
+                        'path': 'de',
+                        'cookie': 'es',
+                        'url': 'fr',
+                        }
+        self.negotiator.set_policy('browser --> path --> cookie --> url')
+
+        key = self.negotiator._get_cache_key(('bg', 'fr'), client_langs)
+        miss = self.negotiator._query_cache(key, self.req)
+        self.assertEqual(miss, None)
+        result = self.negotiator.getLanguage(('bg', 'fr'), self.req)
+        self.assertEqual(result, 'fr')
+        hit = self.negotiator._query_cache(key, self.req)
+        self.assertEqual(hit, 'fr')
+
     def test_negotiate_url(self):
-        self.negotiator.policy = 'url'
+        self.negotiator.set_policy('url')
         result = self.negotiator.getLanguage(('en', 'de', 'fr'), self.req)
         self.assertEqual(result, 'fr')
 
     def test_negotiate_path(self):
-        self.negotiator.policy = 'path'
+        self.negotiator.set_policy('path')
         result = self.negotiator.getLanguage(('en', 'de', 'fr'), self.req)
         self.assertEqual(result, 'de')
 
     def test_negotiate_cookie(self):
-        self.negotiator.policy = 'cookie'
+        self.negotiator.set_policy('cookie')
         result = self.negotiator.getLanguage(('en', 'es', 'fr'), self.req)
         self.assertEqual(result, 'es')
 
+
     def test_negotiate_browser(self):
-        self.negotiator.policy = 'browser'
+        self.negotiator.set_policy('browser')
         result = self.negotiator.getLanguage(('en', 'pt_BR', 'fr'), self.req)
-        self.assertEqual(result, 'pt_BR')
+        self.assertEqual(result, 'pt-br')
 
     def test_negotiate_partial(self):
-        self.negotiator.policy = 'cookie'
+        self.negotiator.set_policy('cookie')
         self.req.cookies[self.cookie_id] = 'pt-un'
         result = self.negotiator.getLanguage(('en', 'pt-br', 'pt-un', 'fr'), self.req)
         self.assertEqual(result, 'pt-un')
@@ -47,8 +71,8 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.assertEqual(result, 'pt')
 
     def test_negotiate_priorities(self):
-        self.negotiator.policy = 'cookie --> browser --> url'
-        self.req.cookies[self.cookie_id] = 'fr' # fails
+        self.negotiator.set_policy('cookie --> browser --> url')
+        self.req.cookies[self.cookie_id] = 'bg' # fails
         self.req['AcceptLanguage'] = 'es' # fails
         self.req.form[self.cookie_id] = 'de' # hits
         result = self.negotiator.getLanguage(('en', 'de', 'fr'), self.req)
