@@ -23,7 +23,7 @@ class LocalizerWrapper(Persistent):
         self.cat = portal.getPortalTranslations()
         self.loc = portal.getLocalizer()
 
-    ### ITranslationCatalog
+    ### INyTranslationCatalog
 
     def edit_message(self, msgid, lang, translation):
         """ """

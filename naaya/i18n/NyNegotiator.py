@@ -1,10 +1,11 @@
-# Python imports
-import re
 
 # Zope imports
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
 from Persistence import Persistent
+
+# Product imports
+from LanguageManagers import normalize_code
 
 class NyNegotiator(Persistent):
     implements(INegotiator)
@@ -45,14 +46,10 @@ class NyNegotiator(Persistent):
         else:
             return None
 
-    def normalize_code(self, code):
-        not_letter = re.compile(r'[^a-z]+')
-        return re.sub(not_letter, '-', code.lower())
-
     # INegotiator interface:
     def getLanguage(self, available, request):
         """Returns the language dependent on the policy."""
-        available = map(self.normalize_code, available)
+        available = map(normalize_code, available)
         # here we keep {'xx': 'xx-zz'} for xx-zz, for fallback cases
         secondary = {}
         for x in [av for av in available if av.find("-") > -1]:
@@ -72,10 +69,10 @@ class NyNegotiator(Persistent):
         else:
             path = ''
 
-        client_langs = {'browser': self.normalize_code(AcceptLanguage),
-                        'url': self.normalize_code(url),
-                        'path': self.normalize_code(path),
-                        'cookie': self.normalize_code(cookie)}
+        client_langs = {'browser': normalize_code(AcceptLanguage),
+                        'url': normalize_code(url),
+                        'path': normalize_code(path),
+                        'cookie': normalize_code(cookie)}
 
         # compute place in cache and check cache
         key = self._get_cache_key(available, client_langs)

@@ -1,0 +1,3 @@
+METATYPE_NAAYAI18N = 'Naaya I18N'
+ID_NAAYAI18N = 'portal_i18n'
+TITLE_NAAYAI18N = 'Portal i18n'

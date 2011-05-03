@@ -7,10 +7,18 @@ from zope.i18n.interfaces import IModifiableUserPreferredLanguages
 
 # Project imports
 from naaya.i18n.LanguageManagers import (NyLanguageManager,
-                                         NyPortalLanguageManager)
+                                         NyPortalLanguageManager,
+                                         normalize_code)
 
 
 class NyLanguageManagerTest(unittest.TestCase):
+
+    def test_normalize_code(self):
+        sets = [('pt-br', 'pt-br'), ('en', 'en'), ('ro_RO', 'ro-ro'),
+                ('PT BR', 'pt-br'), ('pt - br', 'pt-br'),
+                ('sk-Cyrillic', 'sk-cyrillic')]
+        for (input, expected) in sets:
+            self.assertEqual(normalize_code(input), expected)
 
     def test_language_manager_init(self):
         lang_manager = NyLanguageManager()

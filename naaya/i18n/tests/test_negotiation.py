@@ -16,13 +16,6 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.req['TraversalRequestNameStack'] = ['de', ]
         self.req.form[self.cookie_id] = 'fr'
 
-    def test_normalize_code(self):
-        sets = [('pt-br', 'pt-br'), ('en', 'en'), ('ro_RO', 'ro-ro'),
-                ('PT BR', 'pt-br'), ('pt - br', 'pt-br'),
-                ('sk-Cyrillic', 'sk-cyrillic')]
-        for (input, expected) in sets:
-            self.assertEqual(self.negotiator.normalize_code(input), expected)
-
     def test_negotiation_cache(self):
         client_langs = {'browser': 'pt-br',
                         'path': 'de',

@@ -8,6 +8,11 @@
       name="default"
       />
 
+   <naaya:adapter
+      factory=".NyMessageCatalog.NyMessageCatalog"
+      provides=".interfaces.INyTranslationCatalog"
+      for=".NyMessageCatalog.LocalizerMessageCatalog"
+      />
 
 
 <!--
