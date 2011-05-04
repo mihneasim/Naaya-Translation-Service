@@ -16,7 +16,7 @@ def normalize_code(code):
     not_letter = re.compile(r'[^a-z]+')
     return re.sub(not_letter, '-', code.lower())
 
-class NyLanguageManager(Persistent):
+class NyLanguages(object):
 
     def __init__(self):
         self.reset()
@@ -30,7 +30,7 @@ class NyLanguageManager(Persistent):
             if line and line[0] != '#':
                 code, name = line.split(' ', 1)
                 self.languages[normalize_code(code)] = name
-        
+
         # Builds a sorted list with the languages code and name
         language_codes = self.languages.keys()
         language_codes.sort()
@@ -67,7 +67,7 @@ class NyLanguageManager(Persistent):
         """
         code = normalize_code(code)
         return self.languages.get(code, '???')
-    
+
 class NyPortalLanguageManager(Persistent):
 
     implements(ILanguageAvailability)

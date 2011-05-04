@@ -16,7 +16,7 @@ from constants import ID_NAAYAI18N, TITLE_NAAYAI18N, METATYPE_NAAYAI18N
 
 # Product imports
 from LocalizerWrapper import LocalizerWrapper
-from LanguageManagers import NyLanguageManager, NyPortalLanguageManager
+from LanguageManagers import (NyPortalLanguageManager, NyLanguages)
 from NyNegotiator import NyNegotiator
 from NyMessageCatalog import LocalizerMessageCatalog
 from interfaces import INyTranslationCatalog
@@ -40,13 +40,21 @@ class NaayaI18N(Persistent, Folder):
 
     def __init__(self, title, languages=('en', )):
         self.title = title
-        self.general_manager = NyLanguageManager()
-        self.portal_manager = NyPortalLanguageManager(languages)
-        self.negotiator = NyNegotiator()
+        self.portal_langs = NyPortalLanguageManager(languages)
         self.catalog = INyTranslationCatalog(
                            LocalizerMessageCatalog('translation_catalog',
                                                    'Translation Catalog',
                                                    languages))
+
+    def get_negotiator(self):
+        if not hasattr(self, 'negotiator'):
+            self.negotiator = NyNegotiator()
+        return self.negotiator
+
+    def get_lang_manager(self):
+        if not hasattr(self, 'lang_manager'):
+            self.lang_manager = NyLanguages()
+        return self.lang_manager
 
 class NyLocalizerTranslator(object):
 
@@ -60,8 +68,8 @@ class NyLocalizerTranslator(object):
         except KeyError, e:
             # malformed Request, probably we are in a mock/testing env.
             return msgid
-        
-        # TODO: set target_language if None
+
+        # TODO: set target_language if we want to move negotiation here
         return localizer.translate(msgid, mapping, context, target_language,
                                    default)
 
@@ -78,8 +86,9 @@ class NyI18nTranslator(object):
             return msgid
         tool = site.getPortalI18n()
         if target_language is None:
-            available = tool.portal_manager.getAvailableLanguages()
-            target_language = tool.negotiator(available, context)
+            available = tool.portal_langs.getAvailableLanguages()
+            target_language = tool.get_negotiator().getLanguage(available,
+                                                                context)
         if default is not None:
             return tool.catalog.gettext(msgid, target_language, default=default)
         else:

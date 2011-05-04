@@ -6,7 +6,7 @@ import unittest
 from zope.i18n.interfaces import IModifiableUserPreferredLanguages
 
 # Project imports
-from naaya.i18n.LanguageManagers import (NyLanguageManager,
+from naaya.i18n.LanguageManagers import (NyLanguages,
                                          NyPortalLanguageManager,
                                          normalize_code)
 
@@ -21,13 +21,13 @@ class NyLanguageManagerTest(unittest.TestCase):
             self.assertEqual(normalize_code(input), expected)
 
     def test_language_manager_init(self):
-        lang_manager = NyLanguageManager()
+        lang_manager = NyLanguages()
         # test languages.txt was used (we have some langs)
         self.assertTrue(len(lang_manager.langs) > 10)
         self.assertTrue(len(lang_manager.languages) > 10)
 
     def test_language_manager_add(self):
-        lang_manager = NyLanguageManager()
+        lang_manager = NyLanguages()
         count0 = len(lang_manager.langs)
         lang_manager.add_language('en-pt', 'Pirate English')
         self.assertEqual(lang_manager.get_language_name('en-pt'),
@@ -40,7 +40,7 @@ class NyLanguageManagerTest(unittest.TestCase):
                          'Pirate English')
 
     def test_language_manager_del(self):
-        lang_manager = NyLanguageManager()
+        lang_manager = NyLanguages()
         lang_manager.add_language('en-pt', 'Pirate English')
         count0 = len(lang_manager.langs)
         lang_manager.del_language('en-pt')
