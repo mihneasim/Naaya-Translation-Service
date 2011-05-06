@@ -11,7 +11,7 @@ class NegotiatorTestSuite(NaayaTestCase):
     def setUp(self):
         self.negotiator = queryUtility(INegotiator)
         self.req = self.portal.REQUEST
-        self.req['AcceptLanguage'] = 'pt-br'
+        self.req['HTTP_ACCEPT_LANGUAGE'] = 'pt-br'
         self.req.cookies[self.cookie_id] = 'es'
         self.req['TraversalRequestNameStack'] = ['de', ]
         self.req.form[self.cookie_id] = 'fr'
@@ -65,7 +65,7 @@ class NegotiatorTestSuite(NaayaTestCase):
     def test_negotiate_priorities(self):
         self.negotiator.set_policy(('cookie', 'browser', 'url'))
         self.req.cookies[self.cookie_id] = 'bg' # fails
-        self.req['AcceptLanguage'] = 'es' # fails
+        self.req['HTTP_ACCEPT_LANGUAGE'] = 'es' # fails
         self.req.form[self.cookie_id] = 'de' # hits
         result = self.negotiator.getLanguage(('en', 'de', 'fr'), self.req)
         self.assertEqual(result, 'de')

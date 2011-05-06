@@ -25,18 +25,22 @@ class TestPortalTool(NaayaTestCase):
         self.assertEqual(self.tool.meta_type, METATYPE_NAAYAI18N)
 
     def test_components_availability(self):
-        self.assertTrue(ILanguageAvailability.providedBy(self.tool.portal_manager))
+        self.assertTrue(ILanguageAvailability.providedBy(
+                           self.tool.get_portal_lang_manager()))
         self.assertTrue(INegotiator.providedBy(self.tool.get_negotiator()))
-        self.assertTrue(INyTranslationCatalog.providedBy(self.tool.catalog))
+        self.assertTrue(INyTranslationCatalog.providedBy(self.tool.get_catalog()))
 
 class TestNySiteApi(NaayaTestCase):
 
     def setUp(self):
         self.portal.gl_add_site_language('de')
-        # needed for Localizer Patching
-        from thread import get_ident
-        from Products.Localizer.patches import _requests
-        _requests[get_ident()] = self.portal.REQUEST
+        # needed for some Localizer Patching:
+        try:
+            from thread import get_ident
+            from Products.Localizer.patches import _requests
+            _requests[get_ident()] = self.portal.REQUEST
+        except:
+            pass
 
     def test_get_all_languages(self):
         known_langs = self.portal.gl_get_all_languages()

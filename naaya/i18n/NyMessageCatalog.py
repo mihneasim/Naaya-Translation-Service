@@ -1,9 +1,13 @@
 
+# Python imports
+from base64 import encodestring, decodestring
+
 # Zope imports
-from Globals import PersistentMapping
+from Globals import PersistentMapping, InitializeClass
 from OFS.SimpleItem import SimpleItem
 from ZPublisher import HTTPRequest
 from zope.interface import implements
+from AccessControl import ClassSecurityInfo
 
 # itools
 from itools.i18n.base import Multilingual
@@ -11,11 +15,49 @@ from itools.i18n.base import Multilingual
 # Product imports
 from interfaces import INyTranslationCatalog
 
+# Do we still need this?
+def update_transaction_note():
+    import transaction, re
+
+    def label_with_count(count):
+        return "(Saving %d new localizer messages)" % count
+    def increment_count(match):
+        return label_with_count(int(match.group('count')) + 1)
+    p = re.compile(r'\(Saving (?P<count>\d+) new localizer messages\)')
+
+    t = transaction.get()
+    if p.search(t.description) is None:
+        t.note(label_with_count(0))
+    t.description = p.sub(increment_count, t.description)
+
+def message_encode(message):
+    """Encodes a message to an ASCII string.
+
+    To be used in the user interface, to avoid problems with the
+    encodings, HTML entities, etc..
+    """
+    if isinstance(message, unicode):
+        encoding = HTTPRequest.default_encoding
+        message = message.encode(encoding)
+
+    return encodestring(message)
+
+def message_decode(message):
+    """Decodes a message from an ASCII string.
+
+    To be used in the user interface, to avoid problems with the
+    encodings, HTML entities, etc..
+    """
+    message = decodestring(message)
+    encoding = HTTPRequest.default_encoding
+    return unicode(message, encoding)
+
 class LocalizerMessageCatalog(Multilingual, SimpleItem):
     """Stores messages and their translations...
     """
 
     meta_type = 'MessageCatalog'
+    security = ClassSecurityInfo()
 
     def __init__(self, id, title, languages=('en', )):
         self.id = id
@@ -67,6 +109,7 @@ class LocalizerMessageCatalog(Multilingual, SimpleItem):
         """ """
         del self._messages[message]
 
+    security.declarePublic('gettext')
     def gettext(self, message, lang, add=1, default=None):
         """Returns the message translation from the database if available.
 
@@ -104,6 +147,8 @@ class NyMessageCatalog(object):
     ''' adapter for the upwards class '''
     implements(INyTranslationCatalog)
 
+    security = ClassSecurityInfo()
+
     def __init__(self, object):
         self.cat = object
 
@@ -125,8 +170,18 @@ class NyMessageCatalog(object):
         """ """
         self.cat.message_del(msgid)
 
-    def gettext(self, msgid, lang, default=None):
+    security.declarePublic('gettext')
+    def gettext(self, msgid, lang=None, default=None):
         """Returns the corresponding translation of msgid in Catalog."""
+
+        # Fix language / rare - translation without ITranslationDomain utility!
+        if lang is None:
+            # hope for acquisition; localizer used to patch request
+            import pdb; pdb.set_trace()
+            lang = self.getPortalI18n().get_negotiator().getLanguage(
+             self.getPortalI18n().get_portal_lang_manager().getAvailableLanguages()
+            )
+
         # language existance test **not present in Localizer**:
         if lang not in self.get_languages():
             add = 0
@@ -145,7 +200,7 @@ class NyMessageCatalog(object):
 
     def add_language(self, lang):
         """Add language"""
-        self.cat.manage_addLanguage(lang) # same comment as in get_languages
+        self.cat.add_language(lang) # same comment as in get_languages
 
     def del_language(self, lang):
         """Delete language with corresponding messages"""
@@ -167,5 +222,8 @@ class NyMessageCatalog(object):
         """
         Returns a generator used for catalog entries iteration.
         """
-        for msgid in self.cat._messages.keys():
-            yield msgid
+        for (msgid, translations_dict) in self.cat._messages.items():
+            yield (msgid, translations_dict)
+
+InitializeClass(LocalizerMessageCatalog)
+InitializeClass(NyMessageCatalog)

@@ -10,7 +10,8 @@ from LanguageManagers import normalize_code
 class NyNegotiator(Persistent):
     implements(INegotiator)
 
-    def __init__(self, cookie_id='LOCALIZER_LANGUAGE', policy='browser'):    
+    def __init__(self, cookie_id='LOCALIZER_LANGUAGE',
+                 policy=('path', 'url', 'cookie', 'browser')):
         """
             * `cookie_id` is a key looked up in cookies/querystrings
             * `policy` can be 'browser', 'url', 'path', 'cookie',
@@ -47,22 +48,28 @@ class NyNegotiator(Persistent):
             return None
 
     # INegotiator interface:
-    def getLanguage(self, available, request):
+    def getLanguage(self, available, request=None):
         """Returns the language dependent on the policy."""
+        if request is None:
+            # rare; not translated by utility, hope for acquisition
+            # Localizer used to patch request by thread id in a module dict
+            if hasattr(request, 'REQUEST'):
+                request = self.REQUEST
+            else:
+                raise ValueError("No request to manage negotiation")
         available = map(normalize_code, available)
         # here we keep {'xx': 'xx-zz'} for xx-zz, for fallback cases
         secondary = {}
         for x in [av for av in available if av.find("-") > -1]:
             secondary[x.split("-", 1)[0]] = x
 
-        AcceptLanguage = ''
-        try:
-            AcceptLanguage = request['AcceptLanguage']
-        except KeyError:
-            pass
+        AcceptLanguage = request.get('HTTP_ACCEPT_LANGUAGE', '')
+        if AcceptLanguage is None:
+            AcceptLanguage = ''
+
         cookie = request.cookies.get(self.cookie_id, '')
-        url = request.form.get(self.cookie_id)
-        stack = request['TraversalRequestNameStack']
+        url = request.form.get(self.cookie_id, '')
+        stack = request.get('TraversalRequestNameStack', '')
         # TODO: Shouldn't we check this is a language code?
         if stack:
             path = stack[-1]

@@ -68,6 +68,9 @@ class NyLanguages(object):
         code = normalize_code(code)
         return self.languages.get(code, '???')
 
+    def get_all_languages(self):
+        return self.langs
+
 class NyPortalLanguageManager(Persistent):
 
     implements(ILanguageAvailability)
