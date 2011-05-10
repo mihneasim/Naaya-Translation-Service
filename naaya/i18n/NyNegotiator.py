@@ -2,12 +2,12 @@
 # Zope imports
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
-from Persistence import Persistent
+from OFS.SimpleItem import SimpleItem
 
 # Product imports
 from LanguageManagers import normalize_code
 
-class NyNegotiator(Persistent):
+class NyNegotiator(SimpleItem):
     implements(INegotiator)
 
     def __init__(self, cookie_id='LOCALIZER_LANGUAGE',
@@ -53,9 +53,10 @@ class NyNegotiator(Persistent):
         if request is None:
             # rare; not translated by utility, hope for acquisition
             # Localizer used to patch request by thread id in a module dict
-            if hasattr(request, 'REQUEST'):
+            if hasattr(self, 'REQUEST'):
                 request = self.REQUEST
             else:
+                import pdb; pdb.set_trace()
                 raise ValueError("No request to manage negotiation")
         available = map(normalize_code, available)
         # here we keep {'xx': 'xx-zz'} for xx-zz, for fallback cases

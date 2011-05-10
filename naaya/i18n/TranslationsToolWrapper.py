@@ -7,6 +7,8 @@ import locale
 
 # Zope imports
 from zope.i18n import interpolate
+from zope.i18n.interfaces import ITranslationDomain
+from zope.component import queryUtility
 
 # Product imports
 from NyMessageCatalog import message_encode, message_decode
@@ -126,3 +128,15 @@ class TranslationsToolWrapper(object):
 
     def __getattr__(self, name):
         return getattr(self.catalog, name)
+
+    ## used to be in Localizer/MessageCatalog
+    # In Naaya: Session messages are translated using this
+    def translate(self, domain, msgid, *args, **kw):
+        """This method is required to get the i18n namespace from ZPT working.
+        """
+
+        if domain is None or domain == '':
+            domain = 'default'
+        ut = queryUtility(ITranslationDomain, domain)
+        kw['context'] = self.REQUEST
+        return ut.translate(msgid, **kw)

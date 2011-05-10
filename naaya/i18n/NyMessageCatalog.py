@@ -143,7 +143,7 @@ class LocalizerMessageCatalog(Multilingual, SimpleItem):
 
         return default
 
-class NyMessageCatalog(object):
+class NyMessageCatalog(SimpleItem):
     ''' adapter for the upwards class '''
     implements(INyTranslationCatalog)
 
@@ -177,7 +177,6 @@ class NyMessageCatalog(object):
         # Fix language / rare - translation without ITranslationDomain utility!
         if lang is None:
             # hope for acquisition; localizer used to patch request
-            import pdb; pdb.set_trace()
             lang = self.getPortalI18n().get_negotiator().getLanguage(
              self.getPortalI18n().get_portal_lang_manager().getAvailableLanguages()
             )
@@ -224,6 +223,7 @@ class NyMessageCatalog(object):
         """
         for (msgid, translations_dict) in self.cat._messages.items():
             yield (msgid, translations_dict)
+
 
 InitializeClass(LocalizerMessageCatalog)
 InitializeClass(NyMessageCatalog)

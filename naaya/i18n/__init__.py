@@ -42,10 +42,11 @@ class NaayaI18n(Persistent, Folder):
     def __init__(self, title, languages=('en', )):
         self.title = title
         self._portal_langs = NyPortalLanguageManager(languages)
-        self._catalog = INyTranslationCatalog(
+        catalog = INyTranslationCatalog(
                            LocalizerMessageCatalog('translation_catalog',
                                                    'Translation Catalog',
                                                    languages))
+        self._catalog = catalog
 
     def get_negotiator(self):
         if not hasattr(self, 'negotiator'):
