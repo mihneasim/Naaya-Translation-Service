@@ -151,6 +151,7 @@ class NyMessageCatalog(SimpleItem):
 
     def __init__(self, object):
         self.cat = object
+        self._po_headers = {}
 
     ### INyTranslationCatalog
 

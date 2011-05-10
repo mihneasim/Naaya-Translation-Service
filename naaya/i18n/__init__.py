@@ -11,6 +11,7 @@ from OFS.Folder import Folder
 from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from zope.i18n import interpolate
+from LocalFiles import LocalDTMLFile
 
 # Naaya imports
 from constants import ID_NAAYAI18N, TITLE_NAAYAI18N, METATYPE_NAAYAI18N
@@ -37,7 +38,6 @@ class NaayaI18n(Persistent, Folder):
     #icon = 'misc_/icon.gif'
 
     security = ClassSecurityInfo()
-    security.declareObjectPublic()
 
     def __init__(self, title, languages=('en', )):
         self.title = title
@@ -114,6 +114,32 @@ class NaayaI18n(Persistent, Folder):
             goto = request['HTTP_REFERER']
 
         response.redirect(goto)
+
+    #######################################################################
+    # Management screens
+    #######################################################################
+    def manage_options(self):
+        """ """
+        options = (
+            {'label': u'Messages', 'action': 'manage_messages'},
+            {'label': u'Languages', 'action': 'manage_languages'},
+            {'label': u'Import', 'action': 'manage_Import_form'
+             #,'help': ('Localizer', 'MC_importExport.stx')
+            },
+            {'label': u'Export', 'action': 'manage_Export_form'
+             #,'help': ('Localizer', 'MC_importExport.stx')
+            }) \
+            + SimpleItem.manage_options
+            #+ LanguageManager.manage_options \
+        r = []
+        for option in options:
+            option = option.copy()
+            #option['label'] = _(option['label'])
+            r.append(option)
+        return r
+
+    security.declareProtected('Manage messages', 'manage_messages')
+    manage_messages = LocalDTMLFile('zpt/MC_messages', globals())
 
 class NyLocalizerTranslator(object):
 
