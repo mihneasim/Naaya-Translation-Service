@@ -81,10 +81,6 @@ class NaayaI18n(Persistent, Folder):
                            'default': l == default})
         return result
 
-    def get_selected_language(self, context=None):
-        return self.get_negotiator().getLanguage(
-                            self._portal_langs.getAvailableLanguages(), context)
-
     def add_language(self, lang):
         # add language to portal:
         self._portal_langs.addAvailableLanguage(lang)
@@ -95,7 +91,11 @@ class NaayaI18n(Persistent, Folder):
         self._portal_langs.delAvailableLanguage(lang)
         self._catalog.del_language(lang)
 
-    def changeLanguage(self, lang, goto=None, expires=None):
+    def get_selected_language(self, context=None):
+        return self.get_negotiator().getLanguage(
+                            self._portal_langs.getAvailableLanguages(), context)
+
+    def change_selected_language(self, lang, goto=None, expires=None):
         """ """
         request = self.REQUEST
         response = request.RESPONSE

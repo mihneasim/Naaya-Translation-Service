@@ -2,19 +2,17 @@
            xmlns:zope="http://namespaces.zope.org/zope"
            xmlns:zcml="http://namespaces.zope.org/zcml">
 
-
-   <naaya:utility
+    <naaya:utility
       factory=".NyI18nTranslator"
       provides="zope.i18n.interfaces.ITranslationDomain"
       name="default"
-      />   
+      />  
 
    <naaya:adapter
       factory=".NyMessageCatalog.NyMessageCatalog"
       provides=".interfaces.INyTranslationCatalog"
       for=".NyMessageCatalog.LocalizerMessageCatalog"
       />
-
 
 <!--
    <includeOverrides file="overrides.zcml" />   

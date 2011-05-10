@@ -7,6 +7,9 @@ from zope.i18n import interpolate
 from zope.component import adapts
 from Persistence import Persistent
 
+# Naaya imports
+from Products.NaayaCore.constants import ID_TRANSLATIONSTOOL
+
 # Product imports
 from naaya.i18n.interfaces import (INyTranslationCatalog, INyLanguageManagement)
 
@@ -20,7 +23,7 @@ class LocalizerWrapper(Persistent):
                IModifiableUserPreferredLanguages, ITranslationDomain)
 
     def __init__(self, portal):
-        self.cat = portal.getPortalTranslations()
+        self.cat = portal._getOb(ID_TRANSLATIONSTOOL)
         self.loc = portal.getLocalizer()
 
     ### INyTranslationCatalog

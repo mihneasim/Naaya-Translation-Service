@@ -11,7 +11,7 @@ from naaya.i18n.interfaces import INyTranslationCatalog
 from naaya.i18n.LocalizerWrapper import LocalizerWrapper
 
 
-class _TranslationCatalogTest(unittest.TestCase):
+class _TranslationCatalog(unittest.TestCase):
 
     catalog_factory = None # TBC
 
@@ -94,10 +94,23 @@ class _TranslationCatalogTest(unittest.TestCase):
         self.assertFalse('de' in catalog.get_languages())
         self.assertEqual(catalog.gettext('dog', 'de'), 'dog')
 
-class LocalizerAdapterTest(NaayaTestCase, _TranslationCatalogTest):
+class LocalizerAdapterTest(NaayaTestCase, _TranslationCatalog):
     def catalog_factory(self, **kw):
         """ create, clean and return Localizer instance here"""
         catalog = LocalizerWrapper(self.portal)
+        # erase catalog
+        catalog.clear()
+        for lang in catalog.get_languages():
+            catalog.del_language(lang)
+        if kw.has_key('languages'):
+            for lang in kw['languages']:
+                catalog.add_language(lang)
+        return catalog
+
+class NyMessageCatalogTest(NaayaTestCase, _TranslationCatalog):
+    def catalog_factory(self, **kw):
+        """ create, clean and return Localizer instance here"""
+        catalog = self.portal.getPortalI18n().get_catalog()
         # erase catalog
         catalog.clear()
         for lang in catalog.get_languages():

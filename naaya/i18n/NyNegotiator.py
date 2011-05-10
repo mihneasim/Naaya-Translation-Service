@@ -56,7 +56,6 @@ class NyNegotiator(SimpleItem):
             if hasattr(self, 'REQUEST'):
                 request = self.REQUEST
             else:
-                import pdb; pdb.set_trace()
                 raise ValueError("No request to manage negotiation")
         available = map(normalize_code, available)
         # here we keep {'xx': 'xx-zz'} for xx-zz, for fallback cases

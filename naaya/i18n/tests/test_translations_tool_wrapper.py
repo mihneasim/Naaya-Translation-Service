@@ -1,7 +1,11 @@
+# -*- coding=utf-8 -*-
 
 # Python imports
 import unittest
 from urllib import quote
+
+# Zope imports
+from Products.PageTemplates.PageTemplate import PageTemplate
 
 # Naaya imports
 from naaya.i18n import NaayaI18n
@@ -85,8 +89,8 @@ class TranslationsToolWrapperTest(unittest.TestCase):
 
 class TranslationsToolWrapperNaayaTest(NaayaTestCase):
 
-    def test_translate(self):
-        # step 1: fix request patch
+    def setUp(self):
+        # step 1: fix request patch, for Localizer
         try:
             # needed for some Localizer Patching:
             from thread import get_ident
@@ -103,18 +107,34 @@ class TranslationsToolWrapperNaayaTest(NaayaTestCase):
         except:
             pass
 
-        # step 3: add message and translation
+        # step 3: force negotiation to de, regardless of negotiator
+        self.portal.REQUEST['EDW_SelectedLanguage'] = {('en', 'de'): 'de'}
+        self.portal.REQUEST['TraversalRequestNameStack'] = ['de']
+
+    def test_translate(self):
+
+
+        # add message and translation
         self.portal.getPortalTranslations().gettext('${count} dogs', 'en')
         try:
             self.portal.getPortalTranslations().message_edit('${count} dogs', 'de', '${count} Hunde', '')
         except AttributeError:
             self.portal.getPortalTranslations().edit_message('${count} dogs', 'de', '${count} Hunde')
 
-        # step 4: force negotiation to de, regardless of negotiator
-        self.portal.REQUEST['EDW_SelectedLanguage'] = {('en', 'de'): 'de'}
-        self.portal.REQUEST['TraversalRequestNameStack'] = 'de'
-
         # and test!
         in_de = self.portal.getPortalTranslations().trans('${count} dogs',
                                                           count='3')
         self.assertEqual(in_de, '3 Hunde')
+
+    def test_template_translation(self):
+        self.tmpl = PageTemplate(id='test_tmpl')
+        self.tmpl.pt_edit('<p i18n:translate="">Home for'
+                          ' <span i18n:name="hours">3</span> hours</p>',
+                          'text/html')
+
+        self.assertEqual(self.tmpl.__of__(self.portal)(),
+                         '<p>Home for <span>3</span> hours</p>')
+        self.portal.getLocalizer().edit_message('Home for ${hours} hours', 'en',
+                                                'Home für ${hours} Stunden')
+        self.assertEqual(self.tmpl.__of__(self.portal)(),
+                         '<p>Home für <span>${hours}</span> Stunden</p>')
