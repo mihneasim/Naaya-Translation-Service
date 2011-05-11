@@ -1,6 +1,5 @@
 
 # Python imports
-from base64 import encodestring, decodestring
 
 # Zope imports
 from Globals import PersistentMapping, InitializeClass
@@ -30,27 +29,6 @@ def update_transaction_note():
         t.note(label_with_count(0))
     t.description = p.sub(increment_count, t.description)
 
-def message_encode(message):
-    """Encodes a message to an ASCII string.
-
-    To be used in the user interface, to avoid problems with the
-    encodings, HTML entities, etc..
-    """
-    if isinstance(message, unicode):
-        encoding = HTTPRequest.default_encoding
-        message = message.encode(encoding)
-
-    return encodestring(message)
-
-def message_decode(message):
-    """Decodes a message from an ASCII string.
-
-    To be used in the user interface, to avoid problems with the
-    encodings, HTML entities, etc..
-    """
-    message = decodestring(message)
-    encoding = HTTPRequest.default_encoding
-    return unicode(message, encoding)
 
 class LocalizerMessageCatalog(Multilingual, SimpleItem):
     """Stores messages and their translations...
@@ -224,6 +202,23 @@ class NyMessageCatalog(SimpleItem):
         """
         for (msgid, translations_dict) in self.cat._messages.items():
             yield (msgid, translations_dict)
+
+    ##### OTHER | PRIVATE #####
+    # could we get rid of this if we normalize format (byte string/unicode)?
+    def _get_message_key(self, message):
+        for (msgid, translations) in self.messages():
+            if msgid == message:
+                return message
+        # A message may be stored as unicode or byte string
+        encoding = HTTPRequest.default_encoding
+        if isinstance(message, unicode):
+            message = message.encode(encoding)
+        else:
+            message = unicode(message, encoding)
+        for (msgid, translations) in self.messages():
+            if msgid == message:
+                return message
+        return None
 
 
 InitializeClass(LocalizerMessageCatalog)

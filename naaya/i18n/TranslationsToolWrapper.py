@@ -9,9 +9,10 @@ import locale
 from zope.i18n import interpolate
 from zope.i18n.interfaces import ITranslationDomain
 from zope.component import queryUtility
+from zope.deprecation import deprecate
 
 # Product imports
-from NyMessageCatalog import message_encode, message_decode
+from portal_tool import message_encode, message_decode
 from LanguageManagers import NyLanguages
 
 class TranslationsToolWrapper(object):
@@ -131,6 +132,8 @@ class TranslationsToolWrapper(object):
 
     ## used to be in Localizer/MessageCatalog
     # In Naaya: Session messages are translated using this
+    @deprecate("Translate method shouldn't be called on catalog;" +
+               " call the translate of ITranslationDomain utility")
     def translate(self, domain, msgid, *args, **kw):
         """This method is required to get the i18n namespace from ZPT working.
         """

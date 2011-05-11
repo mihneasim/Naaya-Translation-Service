@@ -1,145 +1,15 @@
-# Python imports
 
 # Zope imports
 from zope.i18n.interfaces import ITranslationDomain
-from zope.schema import TextLine
 from zope.interface import implements
 from zope.component import queryUtility
-from Persistence import Persistent
 from App.ImageFile import ImageFile
-from OFS.Folder import Folder
-from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from zope.i18n import interpolate
-from LocalFiles import LocalDTMLFile
-
-# Naaya imports
-from constants import ID_NAAYAI18N, TITLE_NAAYAI18N, METATYPE_NAAYAI18N
 
 # Product imports
 from LocalizerWrapper import LocalizerWrapper
-from LanguageManagers import (NyPortalLanguageManager, NyLanguages)
-from NyNegotiator import NyNegotiator
-from NyMessageCatalog import LocalizerMessageCatalog
-from interfaces import INyTranslationCatalog
-
-def manage_addNaayaI18n(self, languages=('en', ), REQUEST=None, RESPONSE=None):
-    """
-    Add a new NaayaI18n instance (portal_i18n)
-    """
-    self._setObject(ID_NAAYAI18N, NaayaI18n(TITLE_NAAYAI18N, languages))
-
-    if REQUEST is not None:
-        RESPONSE.redirect('manage_main')
-
-class NaayaI18n(Persistent, Folder):
-
-    meta_type = METATYPE_NAAYAI18N
-    #icon = 'misc_/icon.gif'
-
-    security = ClassSecurityInfo()
-
-    def __init__(self, title, languages=('en', )):
-        self.title = title
-        self._portal_langs = NyPortalLanguageManager(languages)
-        catalog = INyTranslationCatalog(
-                           LocalizerMessageCatalog('translation_catalog',
-                                                   'Translation Catalog',
-                                                   languages))
-        self._catalog = catalog
-
-    def get_negotiator(self):
-        if not hasattr(self, 'negotiator'):
-            self.negotiator = NyNegotiator()
-        return self.negotiator
-
-    def get_catalog(self):
-        return self._catalog
-
-    def get_lang_manager(self):
-        if not hasattr(self, 'lang_manager'):
-            self.lang_manager = NyLanguages()
-        return self.lang_manager
-
-    def get_portal_lang_manager(self):
-        return self._portal_langs
-
-    ### More specific methods:
-
-    def get_languages_mapping(self):
-        """ Returns
-        [{'code': 'xx', 'name': 'Xxx xx', default: True/False}, .. ]
-        for languages currently available in portal
-        """
-        langs = list(self._portal_langs.getAvailableLanguages())
-        langs.sort()
-        result = []
-        default = self._portal_langs.get_default_language()
-        for l in langs:
-            result.append({'code': l,
-                           'name': self.get_lang_manager().get_language_name(l),
-                           'default': l == default})
-        return result
-
-    def add_language(self, lang):
-        # add language to portal:
-        self._portal_langs.addAvailableLanguage(lang)
-        # and to catalog:
-        self._catalog.add_language(lang)
-
-    def del_language(self, lang):
-        self._portal_langs.delAvailableLanguage(lang)
-        self._catalog.del_language(lang)
-
-    def get_selected_language(self, context=None):
-        return self.get_negotiator().getLanguage(
-                            self._portal_langs.getAvailableLanguages(), context)
-
-    def change_selected_language(self, lang, goto=None, expires=None):
-        """ """
-        request = self.REQUEST
-        response = request.RESPONSE
-        negotiator = self.get_negotiator()
-
-        # Changes the cookie (it could be something different)
-        parent = self.aq_parent
-        path = parent.absolute_url()[len(request['SERVER_URL']):] or '/'
-        if expires is None:
-            response.setCookie(negotiator.cookie_id, lang, path=path)
-        else:
-            response.setCookie(negotiator.cookie_id, lang, path=path,
-                               expires=unquote(expires))
-        # Comes back
-        if goto is None:
-            goto = request['HTTP_REFERER']
-
-        response.redirect(goto)
-
-    #######################################################################
-    # Management screens
-    #######################################################################
-    def manage_options(self):
-        """ """
-        options = (
-            {'label': u'Messages', 'action': 'manage_messages'},
-            {'label': u'Languages', 'action': 'manage_languages'},
-            {'label': u'Import', 'action': 'manage_Import_form'
-             #,'help': ('Localizer', 'MC_importExport.stx')
-            },
-            {'label': u'Export', 'action': 'manage_Export_form'
-             #,'help': ('Localizer', 'MC_importExport.stx')
-            }) \
-            + SimpleItem.manage_options
-            #+ LanguageManager.manage_options \
-        r = []
-        for option in options:
-            option = option.copy()
-            #option['label'] = _(option['label'])
-            r.append(option)
-        return r
-
-    security.declareProtected('Manage messages', 'manage_messages')
-    manage_messages = LocalDTMLFile('zpt/MC_messages', globals())
+from portal_tool import NaayaI18n, manage_addNaayaI18n
 
 class NyLocalizerTranslator(object):
 
@@ -185,12 +55,12 @@ def initialize(context):
     """ """
 
     context.registerClass(
-        NaayaI18N,
-        constructors = (manage_addNaayaI18N, ),
+        NaayaI18n,
+        constructors = (manage_addNaayaI18n, ),
         icon='www/icon.gif')
 
 InitializeClass(NaayaI18n)
 
 misc_ = {
-    'icon.gif': ImageFile('www/icon.gif', globals())
+    'portal_i18n/icon.gif': ImageFile('www/icon.gif', globals())
 }

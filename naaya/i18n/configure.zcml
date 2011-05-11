@@ -6,7 +6,7 @@
       factory=".NyI18nTranslator"
       provides="zope.i18n.interfaces.ITranslationDomain"
       name="default"
-      />  
+      />
 
    <naaya:adapter
       factory=".NyMessageCatalog.NyMessageCatalog"

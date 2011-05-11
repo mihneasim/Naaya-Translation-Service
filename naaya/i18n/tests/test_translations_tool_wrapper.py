@@ -31,7 +31,7 @@ def _wrapper_factory():
         wrapper.message_edit('Administration', 'de', 'Verwaltung', '')
         wrapper.gettext('Unkown', 'en')
     else:
-        catalog = NaayaI18n('title', ('en', 'de')).get_catalog()
+        catalog = NaayaI18n('id', 'title', ('en', 'de')).get_catalog()
         catalog.edit_message('Administration', 'de', 'Verwaltung')
         catalog.gettext('Unkown', 'en')
         wrapper = TranslationsToolWrapper(catalog)

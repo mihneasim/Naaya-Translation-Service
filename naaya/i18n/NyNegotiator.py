@@ -2,22 +2,23 @@
 # Zope imports
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
-from OFS.SimpleItem import SimpleItem
 
 # Product imports
 from LanguageManagers import normalize_code
 
-class NyNegotiator(SimpleItem):
+class NyNegotiator(object):
     implements(INegotiator)
 
     def __init__(self, cookie_id='LOCALIZER_LANGUAGE',
-                 policy=('path', 'url', 'cookie', 'browser')):
+                 policy=('path', 'url', 'cookie', 'browser'),
+                 request=None):
         """
             * `cookie_id` is a key looked up in cookies/querystrings
             * `policy` can be 'browser', 'url', 'path', 'cookie',
             or any combination as a list of priorities
         """
         self.cookie_id = cookie_id
+        self.request = request
         self.set_policy(policy)
 
     def set_policy(self, policy):
@@ -51,10 +52,8 @@ class NyNegotiator(SimpleItem):
     def getLanguage(self, available, request=None):
         """Returns the language dependent on the policy."""
         if request is None:
-            # rare; not translated by utility, hope for acquisition
-            # Localizer used to patch request by thread id in a module dict
-            if hasattr(self, 'REQUEST'):
-                request = self.REQUEST
+            if self.request is not None:
+                request = self.request
             else:
                 raise ValueError("No request to manage negotiation")
         available = map(normalize_code, available)
