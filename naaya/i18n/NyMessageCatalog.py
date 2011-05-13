@@ -82,7 +82,6 @@ class LocalizerMessageCatalog(Multilingual, SimpleItem):
         self._messages[message][language] = translation
         self._messages[message]['note'] = note
 
-
     def message_del(self, message):
         """ """
         del self._messages[message]
@@ -204,7 +203,7 @@ class NyMessageCatalog(SimpleItem):
             yield (msgid, translations_dict)
 
     ##### OTHER | PRIVATE #####
-    # could we get rid of this if we normalize format (byte string/unicode)?
+    # could we get rid of this if we normalize the format (byte string/unicode)?
     def _get_message_key(self, message):
         for (msgid, translations) in self.messages():
             if msgid == message:

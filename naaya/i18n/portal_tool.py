@@ -11,6 +11,8 @@ from AccessControl import ClassSecurityInfo
 from Globals import DTMLFile
 from ZPublisher import HTTPRequest
 from zope.app.i18n import ZopeMessageFactory as _
+from AccessControl.Permissions import view_management_screens
+from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 
 # Naaya imports
 from constants import ID_NAAYAI18N, TITLE_NAAYAI18N, METATYPE_NAAYAI18N
@@ -21,6 +23,7 @@ from NyMessageCatalog import LocalizerMessageCatalog
 from NyNegotiator import NyNegotiator
 from interfaces import INyTranslationCatalog
 
+# used by get_namespace mainly (to prefill dtml vars)
 def to_unicode(x):
     """In Zope the ISO-8859-1 encoding has an special status, normal strings
     are considered to be in this encoding by default.
@@ -191,6 +194,8 @@ class NaayaI18n(Folder):
             r.append(option)
         return r
 
+    #### Messages Tab ####
+
     security.declarePublic('get_namespace')
     def get_namespace(self, REQUEST):
         """For the management interface, allows to filter the messages to
@@ -330,3 +335,31 @@ class NaayaI18n(Folder):
                       manage_tabs_message=_(u'Saved changes.'))
         RESPONSE.redirect(url)
 
+    #### Languages Tab ####
+
+    security.declareProtected(view_management_screens, 'manage_languages')
+    manage_languages = PageTemplateFile('zpt/languages', globals())
+
+    security.declareProtected(view_management_screens, 'manage_addLanguage')
+    def manage_addLanguage(self, language, REQUEST=None):
+        """
+        Add a new language for this portal.
+        """
+        self.getSite().gl_add_site_language(language)
+        if REQUEST: REQUEST.RESPONSE.redirect('manage_languages?save=ok')
+
+    security.declareProtected(view_management_screens, 'manage_delLanguages')
+    def manage_delLanguages(self, languages, REQUEST=None):
+        """
+        Delete one or more languages.
+        """
+        self.getSite().gl_del_site_languages(languages)
+        if REQUEST: REQUEST.RESPONSE.redirect('manage_languages?save=ok')
+
+    security.declareProtected(view_management_screens, 'manage_changeDefaultLang')
+    def manage_changeDefaultLang(self, language, REQUEST=None):
+        """
+        Change the default portal language.
+        """
+        self.getSite().gl_change_site_defaultlang(language)
+        if REQUEST: REQUEST.RESPONSE.redirect('manage_languages?save=ok')
