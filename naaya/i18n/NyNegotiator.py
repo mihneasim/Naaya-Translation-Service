@@ -21,7 +21,7 @@ class NyNegotiator(object):
         """
         self.cookie_id = cookie_id
         self.request = request
-        if not isinstance(self.request, Request):
+        if not isinstance(self.request, Request) and getSite() is not None:
             self.request = getSite().REQUEST
         self.set_policy(policy)
 

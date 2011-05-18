@@ -94,7 +94,7 @@ class _TranslationCatalog(unittest.TestCase):
         self.assertFalse('de' in catalog.get_languages())
         self.assertEqual(catalog.gettext('dog', 'de'), 'dog')
 
-class LocalizerAdapterTest(NaayaTestCase, _TranslationCatalog):
+class LocalizerWrapperTest(NaayaTestCase, _TranslationCatalog):
     def catalog_factory(self, **kw):
         """ create, clean and return Localizer instance here"""
         catalog = LocalizerWrapper(self.portal)

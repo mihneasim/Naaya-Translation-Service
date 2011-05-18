@@ -62,5 +62,5 @@ def initialize(context):
 InitializeClass(NaayaI18n)
 
 misc_ = {
-    'portal_i18n/icon.gif': ImageFile('www/icon.gif', globals())
+    'icon.gif': ImageFile('www/icon.gif', globals())
 }

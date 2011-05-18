@@ -181,7 +181,12 @@ class LocalPropertyManager(object):
     security.declarePublic('get_portal_i18n')
     def get_portal_i18n(self):
         """ """
-        return getSite().getPortalI18n()
+        if getSite() is not None:
+            # preferred, acquisiton may be overwritten, use hook before traversal
+            return getSite().getPortalI18n()
+        else:
+            # no traversal, use acquisition
+            return self.getSite().getPortalI18n()
 
     ### For compatibility with old property manager - for here/get_lang..
     security.declarePublic('get_languages_mapping')

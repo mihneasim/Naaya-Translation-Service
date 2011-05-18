@@ -19,7 +19,7 @@ from constants import ID_NAAYAI18N, TITLE_NAAYAI18N, METATYPE_NAAYAI18N
 
 # Product imports
 from LanguageManagers import (NyPortalLanguageManager, NyLanguages)
-from NyMessageCatalog import LocalizerMessageCatalog
+from NyMessageCatalog import NyMessageCatalog
 from NyNegotiator import NyNegotiator
 from interfaces import INyTranslationCatalog
 
@@ -96,10 +96,8 @@ class NaayaI18n(Folder):
         self.id = id
         self.title = title
         self._portal_langs = NyPortalLanguageManager(languages)
-        catalog = INyTranslationCatalog(
-                           LocalizerMessageCatalog('translation_catalog',
-                                                   'Translation Catalog',
-                                                   languages))
+        catalog = NyMessageCatalog('translation_catalog', 'Translation Catalog',
+                                    languages)
         self._catalog = catalog
 
     def get_negotiator(self):
