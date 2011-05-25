@@ -20,8 +20,7 @@ class NegotiatorTestSuite(NaayaTestCase):
         client_langs = {'browser': 'pt-br',
                         'path': 'de',
                         'cookie': 'es',
-                        'url': 'fr',
-                        }
+                        'url': 'fr'}
         self.negotiator.set_policy(['browser', 'path', 'cookie', 'url'])
 
         key = self.negotiator._get_cache_key(('bg', 'fr'), client_langs)

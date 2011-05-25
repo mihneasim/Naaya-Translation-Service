@@ -290,7 +290,9 @@ class NyMessageCatalog(SimpleItem):
         if not self._messages[msgid].has_key(self._default_language):
             self._messages[msgid][self._default_language] = default
 
-        return self._messages[msgid].get(lang, default)
+        # translation may be blank (supposition), then-> default (usually msgid)
+        in_catalog = self._messages[msgid].get(lang, '')
+        return in_catalog or default
 
     def get_languages(self):
         """Get available languages"""

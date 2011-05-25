@@ -17,13 +17,13 @@
       for=".NyMessageCatalog.LocalizerMessageCatalog"
       />
 
+<!--
+
   <zope:subscriber
       for="zope.app.component.interfaces.ISite
            zope.app.publication.interfaces.IBeforeTraverseEvent"
       handler="zope.app.component.site.threadSiteSubscriber"
       />
-
-<!--
 
    <includeOverrides file="overrides.zcml" />
 

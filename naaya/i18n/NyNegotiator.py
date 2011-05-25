@@ -53,8 +53,14 @@ class NyNegotiator(object):
             return None
 
     # INegotiator interface:
-    def getLanguage(self, available, request=None):
-        """Returns the language dependent on the policy."""
+    def getLanguage(self, available, request=None, fallback=True):
+        """
+        Returns the language dependent on the policy.
+
+        If `fallback` is True (default), return first av. language on failure.
+        If `fallback` is False, return None on failure, let third party app
+        choose an app-dependant default (eg get_default_language() in portal)
+        """
         if request is None:
             if self.request is not None:
                 request = self.request
@@ -104,5 +110,7 @@ class NyNegotiator(object):
                 # if xx-yy not found, but xx-zz is available, return xx-zz
                 elif first_code in secondary.keys():
                     return secondary[first_code]
-
-        return available[0]
+        if fallback:
+            return available[0]
+        else:
+            return None

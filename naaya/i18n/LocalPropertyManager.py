@@ -121,13 +121,16 @@ class LocalPropertyManager(object):
         """Returns a local property"""
         if id not in self._local_properties:
             return ''
-        # No language, look for the first non-empty available version
+        # No language, look for the first non-empty available version or def.
         if lang is None:
             i18n_tool = self.get_portal_i18n()
-            #lang = i18n_tool.get_selected_language(property=id)
             # need to negotiate lang based on available langs for this prop.
             lang = i18n_tool.get_negotiator().\
-                getLanguage(self._local_properties[id].keys())
+                getLanguage(self._local_properties[id].keys(), fallback=False)
+            if lang is None:
+                # eg: we ask default (en), id has only 'de', lang is the None
+                # because fallback=False (else would have been `de`)
+                lang = i18n_tool.get_portal_lang_manager().get_default_language()
         if lang not in self._local_properties[id]:
             return ''
         value = self._local_properties[id][lang]
