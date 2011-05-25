@@ -45,13 +45,6 @@ class LocalPropertyManager(object):
     # Useful to find or index all LPM instances
     isLocalPropertyManager = 1
 
-
-    def getLocalPropertyManager(self):
-        """
-        Returns the instance, useful to get the object through acquisition.
-        """
-        return self
-
     security.declarePublic('hasLocalProperty')
     def hasLocalProperty(self, id):
         """Return true if object has a property 'id'"""
@@ -63,9 +56,7 @@ class LocalPropertyManager(object):
     security.declareProtected('Manage properties', 'set_localpropvalue')
     def set_localpropvalue(self, id, lang, value):
         # Get previous value
-        old_value, timestamp = self.get_localproperty(id, lang)
-        if old_value is None:
-            old_value = ''
+        old_value = self.getLocalAttribute(id, lang)
         # Update value only if it is different
         if value != old_value:
             properties = self._local_properties.copy()
@@ -76,16 +67,16 @@ class LocalPropertyManager(object):
 
             self._local_properties = properties
 
-    def get_localproperty(self, name, language):
-        if name not in self._local_properties:
-            return None, None
-        property = self._local_properties[name]
-        if language not in property:
-            return None, None
-        value = property[language]
-        if isinstance(value, tuple):
-            return value
-        return value, None
+    #def get_localproperty(self, name, language):
+    #    if name not in self._local_properties:
+    #        return None, None
+    #    property = self._local_properties[name]
+    #    if language not in property:
+    #        return None, None
+    #    value = property[language]
+    #    if isinstance(value, tuple):
+    #        return value
+    #    return value, None
 
     security.declareProtected('Manage properties', 'set_localproperty')
     def set_localproperty(self, id, type, lang=None, value=None):
@@ -120,30 +111,6 @@ class LocalPropertyManager(object):
     _setLocalProperty = set_localproperty
     _delLocalProperty = del_localproperty
 
-    security.declareProtected('Manage properties', 'is_obsolete')
-    def is_obsolete(self, prop, lang):
-        i18n_tool = self.get_portal_i18n()
-        def_lang = i18n_tool.get_portal_lang_manager().get_default_language()
-
-        value, t0 = self.get_localproperty(prop, def_lang)
-        value, t1 = self.get_localproperty(prop, lang)
-        if t0 is None:
-            return False
-        if t1 is None:
-            return True
-        return t1 < t0
-
-    security.declarePublic('getTargetLanguages')
-    def get_targetLanguages(self):
-        """Get all languages except the default one."""
-        i18n_tool = self.get_portal_i18n()
-        def_lang = i18n_tool.get_portal_lang_manager().get_default_language()
-        all_langs = i18n_tool.get_languages_mapping()
-        for record in all_langs:
-            if def_lang == record['code']:
-                all_langs.remove(record)
-        return all_langs
-
     security.declarePublic('getLocalProperties')
     def getLocalProperties(self):
         """Returns a copy of the properties metadata."""
@@ -152,17 +119,22 @@ class LocalPropertyManager(object):
     security.declarePublic('getLocalAttribute')
     def getLocalAttribute(self, id, lang=None):
         """Returns a local property"""
-        # No language, look for the first non-empty available version
-        i18n_tool = self.get_portal_i18n()
-        if lang is None:
-            # get_selected_language doesn't have param - neither did in localizer
-            #lang = i18n_tool.get_selected_language(property=id)
-            lang = i18n_tool.get_selected_language()
-
-        value, timestamp = self.get_localproperty(id, lang)
-        if value is None:
+        if id not in self._local_properties:
             return ''
-        return value
+        # No language, look for the first non-empty available version
+        if lang is None:
+            i18n_tool = self.get_portal_i18n()
+            #lang = i18n_tool.get_selected_language(property=id)
+            # need to negotiate lang based on available langs for this prop.
+            lang = i18n_tool.get_negotiator().\
+                getLanguage(self._local_properties[id].keys())
+        if lang not in self._local_properties[id]:
+            return ''
+        value = self._local_properties[id][lang]
+        if isinstance(value, tuple): # (value, timestamp)
+            return value[0]
+        else:
+            return value
 
     # XXX For backwards compatibility (<= 0.8.0)
     getLocalProperty = getLocalAttribute
@@ -195,7 +167,6 @@ class LocalPropertyManager(object):
 
     security.declarePublic('get_language_name')
     def get_language_name(self, lang):
-        return self.get_portal_i18n().\
-                get_lang_manager().get_language_name(lang)
+        return self.get_portal_i18n().get_language_name(lang)
 
 InitializeClass(LocalPropertyManager)

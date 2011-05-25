@@ -7,6 +7,7 @@ from zope.interface import implements
 from zope.i18n.interfaces import (IModifiableUserPreferredLanguages,
                                   ILanguageAvailability)
 from Persistence import Persistent
+from persistent.list import PersistentList
 
 # Project imports
 from interfaces import INyLanguageManagement
@@ -75,47 +76,53 @@ class NyPortalLanguageManager(Persistent):
 
     implements(ILanguageAvailability)
 
-    def __init__(self, default_langs=('en', )):
-        if isinstance(default_langs, (str, unicode)):
-            default_langs = (default_langs, )
-        else:
-            default_langs = tuple(default_langs)
-
-        self.portal_languages = default_langs
+    def __init__(self, default_langs=[('en', 'English')]):
+        if not isinstance(default_langs, list):
+            raise ValueError("Default languages must be a list of touples"
+                             " (code, name)")
+        self.portal_languages = PersistentList(default_langs)
 
     def getAvailableLanguages(self):
         """Return a sequence of language tags for available languages
         """
-        return self.portal_languages
+        return tuple([ x[0] for x in self.portal_languages ])
 
-    def addAvailableLanguage(self, lang):
+    def addAvailableLanguage(self, lang_code, lang_name=None):
         """Adds available language in portal"""
-        lang = normalize_code(lang)
-        if lang not in self.portal_languages:
-            self.portal_languages += (lang, )
+        lang_code = normalize_code(lang_code)
+        if not lang_name:
+            n = NyLanguages()
+            lang_name = n.get_language_name(lang_code)
+        if lang_code not in self.getAvailableLanguages():
+            self.portal_languages.append((lang_code, lang_name))
 
     def delAvailableLanguage(self, lang):
         lang = normalize_code(lang)
-        new_list = []
-        for av_lang in self.portal_languages:
-            if av_lang != lang:
-                new_list.append(av_lang)
-        if len(new_list):
-            self.portal_languages = tuple(new_list)
-        else:
-            raise ValueError("Can not delete the only available language")
+        pos = list(self.getAvailableLanguages()).index(lang)
+        if pos > -1:
+            if len(self.getAvailableLanguages()) == 1:
+                raise ValueError("Can not delete the only available language")
+            else:
+                self.portal_languages.pop(pos)
 
     # MORE:
     def set_default_language(self, lang):
         lang = normalize_code(lang)
-        if lang not in self.portal_languages:
+        if lang not in self.getAvailableLanguages():
             raise ValueError("Language %s is not provided by portal" % lang)
-        lst = list(self.portal_languages)
-        if len(lst)==1:
+        available = list(self.getAvailableLanguages())
+        if len(available)==1:
             return
-        lst.pop(lst.index(lang))
-        lst.insert(0, lang)
-        self.portal_languages = tuple(lst)
+        pos = available.index(lang)
+        new_default = self.portal_languages.pop(pos)
+        self.portal_languages.insert(0, new_default)
 
     def get_default_language(self):
-        return self.portal_languages[0]
+        return self.portal_languages[0][0]
+
+    def get_language_name(self, code):
+        pos = list(self.getAvailableLanguages()).index(code)
+        if pos > -1:
+            return self.portal_languages[pos][1]
+        else:
+            return "???"

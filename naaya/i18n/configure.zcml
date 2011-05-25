@@ -1,8 +1,11 @@
 <configure xmlns:naaya="http://namespaces.zope.org/zope"
            xmlns:zope="http://namespaces.zope.org/zope"
-           xmlns:zcml="http://namespaces.zope.org/zcml">
+           xmlns:five="http://namespaces.zope.org/five"
+           >
 
-    <naaya:utility
+   <five:registerPackage package="." initialize=".initialize" />
+
+   <naaya:utility
       factory=".NyI18nTranslator"
       provides="zope.i18n.interfaces.ITranslationDomain"
       name="default"
@@ -22,7 +25,7 @@
 
 <!--
 
-   <includeOverrides file="overrides.zcml" />   
+   <includeOverrides file="overrides.zcml" />
 
    <naaya:utility
       factory=".NyLocalizerTranslator"

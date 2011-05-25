@@ -10,6 +10,7 @@ from zope.i18n import interpolate
 from zope.i18n.interfaces import ITranslationDomain
 from zope.component import queryUtility
 from zope.deprecation import deprecate
+from zope.app.component.hooks import getSite
 
 # Product imports
 from portal_tool import message_encode, message_decode
@@ -95,9 +96,12 @@ class TranslationsToolWrapper(object):
         Returns the languages mapping without the english language.
         Remove the entry for the 'code' = 'en'.
         """
-        nylangs = NyLanguages()
+        try:
+            i18n = self.getSite().getPortalI18n()
+        except AttributeError:
+            i18n = getSite().getPortalI18n()
         return [{'code': x,
-                 'name': nylangs.get_language_name(x),
+                 'name': i18n.get_language_name(x),
                  'default': False}
                     for x in self.catalog.get_languages() if x != 'en']
 

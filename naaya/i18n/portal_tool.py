@@ -75,7 +75,8 @@ def get_url(url, batch_start, batch_size, regex, lang, empty, **kw):
     return url + '?' + '&amp;'.join(params)
 
 
-def manage_addNaayaI18n(self, languages=('en', ), REQUEST=None, RESPONSE=None):
+def manage_addNaayaI18n(self, languages=[('en', 'English')],
+                        REQUEST=None, RESPONSE=None):
     """
     Add a new NaayaI18n instance (portal_i18n)
     """
@@ -85,6 +86,7 @@ def manage_addNaayaI18n(self, languages=('en', ), REQUEST=None, RESPONSE=None):
     if REQUEST is not None:
         RESPONSE.redirect('manage_main')
 
+
 class NaayaI18n(Folder):
 
     meta_type = METATYPE_NAAYAI18N
@@ -92,12 +94,13 @@ class NaayaI18n(Folder):
 
     security = ClassSecurityInfo()
 
-    def __init__(self, id, title, languages=('en', )):
+    def __init__(self, id, title, languages=[('en', 'English')]):
         self.id = id
         self.title = title
         self._portal_langs = NyPortalLanguageManager(languages)
+        lang_codes = tuple([x[0] for x in languages])
         catalog = NyMessageCatalog('translation_catalog', 'Translation Catalog',
-                                    languages)
+                                    lang_codes)
         self._catalog = catalog
 
     def get_negotiator(self):
@@ -119,6 +122,13 @@ class NaayaI18n(Folder):
         return self._portal_langs
 
     ### More specific methods:
+    def get_language_name(self, code):
+        if code in self.get_portal_lang_manager().getAvailableLanguages():
+            # try to get name from added langs to site
+            return self.get_portal_lang_manager().get_language_name(code)
+        else:
+            # not there, default to NyLanguages: loads the large languages.txt
+            return self.get_lang_manager().get_language_name(code)
 
     def get_languages_mapping(self):
         """ Returns
@@ -131,15 +141,20 @@ class NaayaI18n(Folder):
         default = self._portal_langs.get_default_language()
         for l in langs:
             result.append({'code': l,
-                           'name': self.get_lang_manager().get_language_name(l),
+                           'name': self.get_language_name(l),
                            'default': l == default})
         return result
 
-    def add_language(self, lang):
+    def add_language(self, lang_code, lang_name=None):
+        if not lang_code:
+            raise ValueError('No language code provided')
+        if lang_name is None:
+            # search for name directly in languages.txt, obviously not in site
+            lang_name = self.get_lang_manager().get_language_name(lang_code)
         # add language to portal:
-        self._portal_langs.addAvailableLanguage(lang)
+        self._portal_langs.addAvailableLanguage(lang_code, lang_name)
         # and to catalog:
-        self._catalog.add_language(lang)
+        self._catalog.add_language(lang_code)
 
     def del_language(self, lang):
         self._portal_langs.delAvailableLanguage(lang)
@@ -339,11 +354,11 @@ class NaayaI18n(Folder):
     manage_languages = PageTemplateFile('zpt/languages', globals())
 
     security.declareProtected(view_management_screens, 'manage_addLanguage')
-    def manage_addLanguage(self, language, REQUEST=None):
+    def manage_addLanguage(self, language_code, language_name, REQUEST=None):
         """
         Add a new language for this portal.
         """
-        self.getSite().gl_add_site_language(language)
+        self.getSite().gl_add_site_language(language_code, language_name)
         if REQUEST: REQUEST.RESPONSE.redirect('manage_languages?save=ok')
 
     security.declareProtected(view_management_screens, 'manage_delLanguages')
