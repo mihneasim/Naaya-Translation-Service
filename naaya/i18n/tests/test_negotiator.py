@@ -1,8 +1,15 @@
 
+# Python imports
+from lxml.html.soupparser import fromstring
+import re
+
+# Zope imports
 from zope.i18n.interfaces import INegotiator
 from zope.component import queryUtility
 
+# Naaya imports
 from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
+from Products.Naaya.tests.NaayaFunctionalTestCase import NaayaFunctionalTestCase
 
 class NegotiatorTestSuite(NaayaTestCase):
 
@@ -13,7 +20,7 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.req = self.portal.REQUEST
         self.req['HTTP_ACCEPT_LANGUAGE'] = 'pt-br'
         self.req.cookies[self.cookie_id] = 'es'
-        self.req['TraversalRequestNameStack'] = ['de', ]
+        self.req[self.negotiator.cookie_id] = 'de'
         self.req.form[self.cookie_id] = 'fr'
 
     def test_negotiation_cache(self):
@@ -73,3 +80,20 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.req.cookies[self.cookie_id] = 'fr' # fails
         result = self.negotiator.getLanguage(('de', 'en', 'es'), self.req)
         self.assertEqual(result, 'de')
+
+class NegotiatorFunctionalTestSuite(NaayaFunctionalTestCase):
+
+    def test_lang_in_path(self):
+        self.browser_do_login('admin', '')
+        self.portal.gl_add_site_language('es', 'Spanish')
+        import transaction; transaction.commit()
+
+        self.browser.go('http://localhost/portal/de')
+        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
+        self.assertEqual(doc.xpath('//div[@id="middle_port"]/h1')[0].text,
+                         'Error page')
+
+        self.browser.go('http://localhost/portal/es')
+        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
+        self.assertTrue(doc.attrib.has_key('lang'))
+        self.assertEqual(doc.attrib['lang'], 'es')

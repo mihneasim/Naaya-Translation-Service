@@ -8,7 +8,23 @@ from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
 
 # Project imports
 from naaya.i18n.interfaces import INyTranslationCatalog
-from naaya.i18n.LocalizerWrapper import LocalizerWrapper
+try:
+    from naaya.i18n.LocalizerWrapper import LocalizerWrapper
+except ImportError:
+    pass
+else:
+    class LocalizerWrapperTest(NaayaTestCase, _TranslationCatalog):
+        def catalog_factory(self, **kw):
+            """ create, clean and return Localizer instance here"""
+            catalog = LocalizerWrapper(self.portal)
+            # erase catalog
+            catalog.clear()
+            for lang in catalog.get_languages():
+                catalog.del_language(lang)
+            if kw.has_key('languages'):
+                for lang in kw['languages']:
+                    catalog.add_language(lang)
+            return catalog
 
 
 class _TranslationCatalog(unittest.TestCase):
@@ -92,24 +108,16 @@ class _TranslationCatalog(unittest.TestCase):
         catalog.edit_message('dog', 'de', 'Hund')
         catalog.del_language('de')
         self.assertFalse('de' in catalog.get_languages())
+        # since lang not in catalog, return en translation
         self.assertEqual(catalog.gettext('dog', 'de'), 'dog')
-
-class LocalizerWrapperTest(NaayaTestCase, _TranslationCatalog):
-    def catalog_factory(self, **kw):
-        """ create, clean and return Localizer instance here"""
-        catalog = LocalizerWrapper(self.portal)
-        # erase catalog
-        catalog.clear()
-        for lang in catalog.get_languages():
-            catalog.del_language(lang)
-        if kw.has_key('languages'):
-            for lang in kw['languages']:
-                catalog.add_language(lang)
-        return catalog
+        # lang deletion must not removes translations
+        for (m, tr) in catalog.messages():
+            if m=='dog':
+                self.assertEqual(tr.get('de', None), 'Hund')
 
 class NyMessageCatalogTest(NaayaTestCase, _TranslationCatalog):
     def catalog_factory(self, **kw):
-        """ create, clean and return Localizer instance here"""
+        """ clean, add extra langs and return catalog from portal_i18n """
         catalog = self.portal.getPortalI18n().get_catalog()
         # erase catalog
         catalog.clear()

@@ -67,17 +67,6 @@ class LocalPropertyManager(object):
 
             self._local_properties = properties
 
-    #def get_localproperty(self, name, language):
-    #    if name not in self._local_properties:
-    #        return None, None
-    #    property = self._local_properties[name]
-    #    if language not in property:
-    #        return None, None
-    #    value = property[language]
-    #    if isinstance(value, tuple):
-    #        return value
-    #    return value, None
-
     security.declareProtected('Manage properties', 'set_localproperty')
     def set_localproperty(self, id, type, lang=None, value=None):
         """Adds a new local property"""
@@ -103,7 +92,7 @@ class LocalPropertyManager(object):
 
         try:
             delattr(self, id)
-        except KeyError:
+        except AttributeError:
             pass
 
     # XXX Backwards compatibility

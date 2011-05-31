@@ -78,12 +78,7 @@ class NyNegotiator(object):
 
         cookie = request.cookies.get(self.cookie_id, '')
         url = request.form.get(self.cookie_id, '')
-        stack = request.get('TraversalRequestNameStack', '')
-        # TODO: Shouldn't we check this is a language code?
-        if stack:
-            path = stack[-1]
-        else:
-            path = ''
+        path = request.get(self.cookie_id, '')
 
         client_langs = {'browser': normalize_code(AcceptLanguage),
                         'url': normalize_code(url),

@@ -73,18 +73,17 @@ class TestNySiteApi(NaayaTestCase):
         self.assertEqual(self.portal.gl_get_default_language(), 'de')
 
     def test_get_selected_language(self):
-        raise SkipTest("Publisher patched by Localizer, can not test this")
-        self.portal.REQUEST['AcceptLanguage'] = 'de'
+        i18n = self.portal.getPortalI18n()
+        self.portal.REQUEST[i18n.get_negotiator().cookie_id] = 'de'
         self.assertEqual(self.portal.gl_get_selected_language(), 'de')
 
     def test_get_languages_map(self):
-        self.portal.REQUEST['TraversalRequestNameStack'] = ['de']
+        i18n = self.portal.getPortalI18n()
+        self.portal.REQUEST[i18n.get_negotiator().cookie_id] = 'de'
         l_map = self.portal.gl_get_languages_map()
         self.assertEqual(len(l_map), 2)
         self.assertTrue('de' in [x['id'] for x in l_map])
         self.assertTrue(DEFAULT_PORTAL_LANGUAGE_CODE in [x['id'] for x in l_map])
-
-        raise SkipTest("Publisher patched by Localizer, can not test this")
         self.assertEqual(['de'], [x['id'] for x in l_map if x['selected']])
 
     def test_get_language_name(self):
@@ -96,11 +95,14 @@ class TestNySiteApi(NaayaTestCase):
         pass
 
     def test_changeLanguage(self):
-        raise SkipTest("Publisher patched by Localizer, can not test this")
+        i18n = self.portal.getPortalI18n()
+        cookie_id = i18n.get_negotiator().cookie_id
         self.assertEqual(self.portal.gl_get_selected_language(),
                          DEFAULT_PORTAL_LANGUAGE_CODE)
         self.portal.gl_changeLanguage('de')
-        self.assertEqual(self.portal.gl_get_selected_language(), 'de')
+        self.assertTrue(self.portal.REQUEST.RESPONSE.cookies.has_key(cookie_id))
+        self.assertEqual(self.portal.REQUEST.RESPONSE.cookies[cookie_id],
+                         {'path': '/portal', 'value': 'de'})
 
     def test_add_site_language(self):
         self.portal.gl_add_site_language('fr')

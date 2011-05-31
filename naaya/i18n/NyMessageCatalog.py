@@ -225,8 +225,6 @@ class NyMessageCatalog(SimpleItem):
     """Stores messages and their translations"""
     implements(INyTranslationCatalog)
 
-    meta_type = 'MessageCatalog'
-    security = ClassSecurityInfo()
 
     def __init__(self, id, title, languages=('en', )):
 
@@ -257,7 +255,6 @@ class NyMessageCatalog(SimpleItem):
         if self._messages.has_key(msgid):
             del self._messages[msgid]
 
-    security.declarePublic('gettext')
     def gettext(self, msgid, lang=None, default=None):
         """Returns the corresponding translation of msgid in Catalog.
         """
@@ -311,11 +308,6 @@ class NyMessageCatalog(SimpleItem):
         langlist.pop(langlist.index(lang))
         self._languages = tuple(langlist)
 
-        # lang deletion also removes translations
-        for msgid in self._messages.keys():
-            if self._messages[msgid].has_key(lang):
-                del self._messages[msgid][lang]
-
     def clear(self):
         """Erase all messages"""
         self._messages.clear()
@@ -349,4 +341,3 @@ class NyMessageCatalog(SimpleItem):
 
 InitializeClass(LocalizerMessageCatalog)
 InitializeClass(NyMessageCatalogAdapter)
-InitializeClass(NyMessageCatalog)

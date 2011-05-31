@@ -5,6 +5,10 @@
 
    <five:registerPackage package="." initialize=".initialize" />
 
+   <zope:adapter
+         factory=".NySitePublishTraverse"
+      />
+
    <naaya:utility
       factory=".NyI18nTranslator"
       provides="zope.i18n.interfaces.ITranslationDomain"
@@ -12,7 +16,7 @@
       />
 
    <naaya:adapter
-      factory=".NyMessageCatalog.NyMessageCatalog"
+      factory=".NyMessageCatalog.NyMessageCatalogAdapter"
       provides=".interfaces.INyTranslationCatalog"
       for=".NyMessageCatalog.LocalizerMessageCatalog"
       />
@@ -21,9 +25,10 @@
 
   <zope:subscriber
       for="zope.app.component.interfaces.ISite
-           zope.app.publication.interfaces.IBeforeTraverseEvent"
-      handler="zope.app.component.site.threadSiteSubscriber"
+           zope.app.publication.interfaces.IEndRequestEvent"
+      handler=".traversalSubscriber"
       />
+
 
    <includeOverrides file="overrides.zcml" />
 
