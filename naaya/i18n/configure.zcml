@@ -23,13 +23,6 @@
 
 <!--
 
-  <zope:subscriber
-      for="zope.app.component.interfaces.ISite
-           zope.app.publication.interfaces.IEndRequestEvent"
-      handler=".traversalSubscriber"
-      />
-
-
    <includeOverrides file="overrides.zcml" />
 
    <naaya:utility

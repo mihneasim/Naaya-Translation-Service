@@ -53,16 +53,6 @@ class NySitePublishTraverse(DefaultPublishTraverse):
             return portal
         return self.fallback(request, name)
 
-
-def traversalSubscriber(object, event):
-    portal = object
-    i18n_tool = portal.getPortalI18n()
-    stack = portal.REQUEST['TraversalRequestNameStack']
-    if (stack and
-        (stack[-1] in i18n_tool.get_portal_lang_manager().getAvailableLanguages())):
-        lang = stack.pop()
-        portal.REQUEST[i18n_tool.get_negotiator] = lang
-
 class NyI18nTranslator(object):
 
     implements(ITranslationDomain)

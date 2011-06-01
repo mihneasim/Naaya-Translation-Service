@@ -4,6 +4,7 @@
 # Zope imports
 from Globals import PersistentMapping, InitializeClass
 from OFS.SimpleItem import SimpleItem
+from Persistence import Persistent
 from ZPublisher import HTTPRequest
 from zope.interface import implements
 from AccessControl import ClassSecurityInfo
@@ -122,6 +123,9 @@ class LocalizerMessageCatalog(Multilingual, SimpleItem):
 
         return default
 
+InitializeClass(LocalizerMessageCatalog)
+
+
 class NyMessageCatalogAdapter(SimpleItem):
     ''' adapter for the upwards class '''
     implements(INyTranslationCatalog)
@@ -221,10 +225,15 @@ class NyMessageCatalogAdapter(SimpleItem):
                 return message
         return None
 
-class NyMessageCatalog(SimpleItem):
+InitializeClass(NyMessageCatalogAdapter)
+
+
+class NyMessageCatalog(Persistent):
     """Stores messages and their translations"""
+
     implements(INyTranslationCatalog)
 
+    security = ClassSecurityInfo()
 
     def __init__(self, id, title, languages=('en', )):
 
@@ -255,6 +264,7 @@ class NyMessageCatalog(SimpleItem):
         if self._messages.has_key(msgid):
             del self._messages[msgid]
 
+    security.declarePublic('gettext')
     def gettext(self, msgid, lang=None, default=None):
         """Returns the corresponding translation of msgid in Catalog.
         """
@@ -339,5 +349,4 @@ class NyMessageCatalog(SimpleItem):
     def _message_exists(self, message):
         return self._messages.has_key(message)
 
-InitializeClass(LocalizerMessageCatalog)
-InitializeClass(NyMessageCatalogAdapter)
+InitializeClass(NyMessageCatalog)
