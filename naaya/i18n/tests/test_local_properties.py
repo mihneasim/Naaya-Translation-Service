@@ -1,22 +1,59 @@
 
 # Python imports
 from lxml.html.soupparser import fromstring
+from lxml.cssselect import CSSSelector
 import re
 
 # Zope imports
 import transaction
 
 # Naaya imports
+from Products.NaayaBase.NyContentType import NyContentData
 from Products.Naaya.tests.NaayaFunctionalTestCase import NaayaFunctionalTestCase
 
-# Helper closures
-title = lambda x: x.xpath('//span[@class="page_title"]')[0].text or ''
-subtitle = lambda x: x.xpath('//span[@class="page_subtitle"]')[0].text or ''
+# Product imports
+from naaya.i18n.LocalPropertyManager import LocalAttribute
+
+class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
+
+    def assertAttrValue(self, name, localized_value, effective_value):
+        self.assertEqual(self.ob.getLocalProperty(name), localized_value)
+        self.assertEqual(getattr(self.ob, name), effective_value)
+
+    def setUp(self):
+        super(LocalPropertyManagerTestSuite, self).setUp()
+        self.ob = self.portal.info
+
+    def test_inexistent(self):
+        self.assertRaises(AttributeError, self.assertAttrValue,
+                          'inexistent', '', '')
+
+    def test_not_localized(self):
+        setattr(self.ob, 'an_attr', True)
+        self.assertAttrValue('an_attr', '', True)
+
+    def test_localized(self):
+        self.ob._setLocalPropValue('specific', 'en', 'English')
+        self.assertAttrValue('specific', 'English', 'English')
+
+    def test_alsolocalized(self):
+        self.ob._setLocalPropValue('specific', 'en', 'English')
+        setattr(self.ob, 'specific', 'unlocalized_value')
+        self.assertAttrValue('specific', 'English', 'English')
 
 
-class LocalPropertiesTestSuite(NaayaFunctionalTestCase):
+class LocalPropertiesFunctionalTestSuite(NaayaFunctionalTestCase):
 
-    def afterSetUp(self):
+    def assertTitle(self, url_lang_sufix, value):
+        #title = lambda x: x.xpath('//span[@class="page_title"]')[0].text or ''
+        title = lambda x: CSSSelector("span.page_title")(x)[0].text_content()
+        url = 'http://localhost/portal/'
+        self.browser.go(url + url_lang_sufix)
+        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
+        self.assertEqual(title(doc), value)
+
+    def setUp(self):
+        super(LocalPropertiesFunctionalTestSuite, self).setUp()
         self.browser_do_login('admin', '')
         self.browser.go('http://localhost/portal/portal_i18n/manage_languages')
         form = self.browser.get_form('manage_addLanguage')
@@ -26,60 +63,32 @@ class LocalPropertiesTestSuite(NaayaFunctionalTestCase):
                              self.browser.get_form_field(form, 'language_code'))
         self.browser.submit()
         self.portal.del_localproperty('site_title')
-        self.portal.del_localproperty('site_subtitle')
         transaction.commit()
 
     def test_with_both_translations(self):
         self.portal.set_localproperty('site_title', 'string', 'en', 'En title')
-        self.portal.set_localproperty('site_subtitle', 'string', 'en', 'En subtitle')
         self.portal.set_localproperty('site_title', 'string', 'fr', 'Fr titre')
-        self.portal.set_localproperty('site_subtitle', 'string', 'fr', 'Fr subtitre')
         transaction.commit()
         # Tests:
-        self.browser.go('http://localhost/portal')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), 'En title')
-        self.assertEqual(subtitle(doc), 'En subtitle')
-        self.browser.go('http://localhost/portal/fr')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), 'Fr titre')
-        self.assertEqual(subtitle(doc), 'Fr subtitre')
+        self.assertTitle('', 'En title')
+        self.assertTitle('en', 'En title')
+        self.assertTitle('fr', 'Fr titre')
 
     def test_without_translations(self):
         # Tests:
-        self.browser.go('http://localhost/portal')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), '')
-        self.assertEqual(subtitle(doc), '')
-        self.browser.go('http://localhost/portal/fr')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), '')
-        self.assertEqual(subtitle(doc), '')
+        self.assertTitle('', '')
+        self.assertTitle('fr', '')
 
     def test_without_default_translation(self):
         self.portal.set_localproperty('site_title', 'string', 'fr', 'Fr titre')
-        self.portal.set_localproperty('site_subtitle', 'string', 'fr', 'Fr subtitre')
         transaction.commit()
         # Tests:
-        self.browser.go('http://localhost/portal')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), '')
-        self.assertEqual(subtitle(doc), '')
-        self.browser.go('http://localhost/portal/fr')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), 'Fr titre')
-        self.assertEqual(subtitle(doc), 'Fr subtitre')
+        self.assertTitle('', '')
+        self.assertTitle('fr', 'Fr titre')
 
     def test_without_secondary_translation(self):
         self.portal.set_localproperty('site_title', 'string', 'en', 'En title')
-        self.portal.set_localproperty('site_subtitle', 'string', 'en', 'En subtitle')
         transaction.commit()
         # Tests:
-        self.browser.go('http://localhost/portal')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), 'En title')
-        self.assertEqual(subtitle(doc), 'En subtitle')
-        self.browser.go('http://localhost/portal/fr')
-        doc = fromstring(re.sub(r'\s+', ' ', self.browser.get_html()))
-        self.assertEqual(title(doc), 'En title')
-        self.assertEqual(subtitle(doc), 'En subtitle')
+        self.assertTitle('', 'En title')
+        self.assertTitle('fr', 'En title')

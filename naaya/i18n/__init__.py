@@ -8,7 +8,10 @@ from Globals import InitializeClass
 from zope.i18n import interpolate
 from zope.publisher.interfaces import IRequest
 from ZPublisher.BaseRequest import DefaultPublishTraverse
-from zope.app.component.interfaces import ISite
+#from zope.app.component.interfaces import ISite
+
+# Naaya imports
+from Products.Naaya.interfaces import INySite
 
 # Product imports
 from portal_tool import NaayaI18n, manage_addNaayaI18n
@@ -38,7 +41,7 @@ else:
                                        default)
 
 class NySitePublishTraverse(DefaultPublishTraverse):
-    adapts(ISite, IRequest)
+    adapts(INySite, IRequest)
 
     def fallback(self, request, name):
         sup = super(NySitePublishTraverse, self)

@@ -50,8 +50,8 @@ class LocalPropertyManager(object):
         """Return true if object has a property 'id'"""
         for property in self._local_properties_metadata:
             if property['id'] == id:
-                return 1
-        return 0
+                return True
+        return False
 
     security.declareProtected('Manage properties', 'set_localpropvalue')
     def set_localpropvalue(self, id, lang, value):

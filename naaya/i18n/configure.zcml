@@ -15,12 +15,6 @@
       name="default"
       />
 
-   <naaya:adapter
-      factory=".NyMessageCatalog.NyMessageCatalogAdapter"
-      provides=".interfaces.INyTranslationCatalog"
-      for=".NyMessageCatalog.LocalizerMessageCatalog"
-      />
-
 <!--
 
    <includeOverrides file="overrides.zcml" />
