@@ -1,6 +1,15 @@
 
 # Python imports
-from time import gmtime, time
+import time
+from datetime import datetime
+from cgi import escape
+try:
+    # python 2.6
+    from hashlib import md5
+except ImportError:
+    # python 2.4
+    from md5 import new as md5
+from lxml import etree
 
 # Empty header information for PO files (UTF-8 is the default encoding)
 empty_po_header = {'last_translator_name': '',
@@ -39,10 +48,11 @@ class TranslationsImportExport(object):
         last_translator_name = header['last_translator_name']
         last_translator_email = header['last_translator_email']
         language_team = header['language_team']
-        charset = header['charset']
+        charset = header['charset'] or 'UTF-8'
 
         # PO file header, empty message.
-        po_revision_date = strftime('%Y-%m-%d %H:%m+%Z', gmtime(time()))
+        po_revision_date = time.strftime('%Y-%m-%d %H:%M+%Z',
+                                         time.gmtime(time.time()))
         pot_creation_date = po_revision_date
         last_translator = '%s <%s>' % (last_translator_name,
                                        last_translator_email)
@@ -53,7 +63,7 @@ class TranslationsImportExport(object):
             language_team = '%s <%s>' % (lang, language_team)
 
         r = ['msgid ""',
-             'msgstr "Project-Id-Version: %s\\n"' % self.title,
+             'msgstr "Project-Id-Version: %s\\n"' % self._catalog.title,
              '"POT-Creation-Date: %s\\n"' % pot_creation_date,
              '"PO-Revision-Date: %s\\n"' % po_revision_date,
              '"Last-Translator: %s\\n"' % last_translator,
@@ -97,93 +107,104 @@ class TranslationsImportExport(object):
 
         return '\n'.join(r2)
 
-    def export_xliff(self, lang, export_all=1):
+    def export_xliff(self, lang, export_all=True):
         """ Exports the content of the message catalog to an XLIFF file
         """
         orglang = self._catalog._default_language
-        from DateTime import DateTime
-        from Products.Localizer.MessageCatalog import md5text
-        from cgi import escape
-        r = []
-        # alias for append function. For optimization purposes
-        r_append = r.append
-        # Generate the XLIFF file header
-        RESPONSE.setHeader('Content-Type', 'text/xml; charset=UTF-8')
-        RESPONSE.setHeader('Content-Disposition',
-                           'attachment; filename="%s_%s_%s.xlf"' % (self.id,
-                                                                    orglang,
-                                                                    lang))
-
-        r_append('<?xml version="1.0" encoding="UTF-8"?>')
-        # Version 1.1 of the DTD is not yet available - use version 1.0
-        r_append('<!DOCTYPE xliff SYSTEM "http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">')
-        # Force a UTF-8 char in the start
-        r_append(u'<!-- XLIFF Format Copyright \xa9 OASIS Open 2001-2003 -->')
-        r_append('<xliff version="1.0">')
-        r_append('<file')
-        r_append('original="/%s"' % self.absolute_url(1))
-        r_append('product-name="Localizer"')
-        r_append('product-version="1.1.x"')
-        r_append('datatype="plaintext"')
-        r_append('source-language="%s"' % orglang)
-        r_append('target-language="%s"' % lang)
-        r_append('date="%s"' % DateTime().HTML4())
-        r_append('>')
-        r_append('<header>')
-#       r_append('<phase-group>')
-#       r_append('<phase ')
-#       r_append('phase-name="%s"' % REQUEST.get('phase_name', ''))
-#       r_append('process-name="Export"')
-#       r_append('tool="Localizer"')
-#       r_append('date="%s"' % DateTime().HTML4())
-#       r_append('company-name="%s"' % REQUEST.get('company_name', ''))
-#       r_append('job-id="%s"' % REQUEST.get('job_id', ''))
-#       r_append('contact-name="%s"' % REQUEST.get('contact_name', ''))
-#       r_append('contact-email="%s"' % REQUEST.get('contact_email', ''))
-#       r_append('/>')
-#       r_append('</phase-group>')
-        r_append('</header>')
-        r_append('<body>')
+        root = etree.Element("xliff", version="1.0")
+        etree.SubElement(root, "file",
+                         #original=("/" + self._catalog.absolute_url(1)),
+                         datatype="plaintext",
+                         date=datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                         **{'source-language': orglang,
+                            'target-language': lang,
+                            'product-name': 'naaya.i18n',
+                            'product-version': '1.0'})
+        header = etree.SubElement(root, "header")
+        header.text = ""
+        body = etree.SubElement(root, "body")
 
         # Get the messages, and perhaps its translations.
         d = {}
-        for msgkey, transunit in self._messages.items():
-            # if export_all=1 export all messages otherwise export
+        for msgkey, transunit in self._catalog.messages():
+            # if export_all=True export all messages otherwise export
             # only untranslated messages
-            try:
-                tr_unit = transunit[lang]
-            except KeyError:
-                tr_unit = ''
+            tr_unit = transunit.get(lang, '')
 
-            if int(export_all) == 1 or (int(export_all) == 0 and tr_unit == ''):
+            if export_all == True or (export_all == False and tr_unit == ''):
                 d[msgkey] = tr_unit
-            else:
-                d[msgkey] = ""
-
-            if d[msgkey] == "":
-                d[msgkey] = msgkey
+                if d[msgkey] == "":
+                    d[msgkey] = msgkey
 
         # Generate sorted msgids to simplify diffs
         dkeys = d.keys()
         dkeys.sort()
         for msgkey in dkeys:
-            transunit = self._messages[msgkey]
-            r_append('<trans-unit id="%s">' % md5text(msgkey))
-            r_append(' <source>%s</source>' % escape(msgkey))
-            r_append(' <target>%s</target>' % escape(d[msgkey]))
-            if transunit.has_key('note') and transunit['note']:
-                r_append(' <note>%s</note>' % escape(transunit['note']))
-            r_append('</trans-unit>')
+            if isinstance(d[msgkey], unicode):
+                d[msgkey] = d[msgkey].encode('utf-8')
+            if isinstance(msgkey, unicode):
+                msgkey = msgkey.encode('utf-8')
 
-        r_append('</body>')
-        r_append('</file>')
-        r_append('</xliff>')
+            tr_unit = etree.SubElement(body, "trans-unit",
+                                       id=md5(msgkey).hexdigest())
+            source = etree.SubElement(tr_unit, "source")
+            source.text = escape(msgkey)
+            target = etree.SubElement(tr_unit, "target")
+            target.text = escape(d[msgkey])
 
-        r2 = []
-        for x in r:
-            if isinstance(x, unicode):
-                r2.append(x.encode('utf-8'))
-            else:
-                r2.append(x)
+        return etree.tostring(root, xml_declaration=True, encoding='utf-8',
+                              pretty_print=True)
 
-        return '\r\n'.join(r2)
+    def export_tmx(self):
+        """Exports the content of the message catalog to a TMX file
+        """
+        orglang = self._catalog._default_language
+
+        # Get the header info
+        header = self.get_po_header(orglang)
+        charset = header['charset']
+        creationtool = 'naaya.i18n'
+        creationtoolversion = '1.0'
+        creationdate = datetime.now().strftime("%Y%m%dT%H%M%SZ")
+
+        root = etree.Element("tmx", version="1.4")
+        #root.docinfo.doctype = '<!DOCTYPE tmx SYSTEM "http://www.lisa.org/tmx/tmx14.dtd" >'
+        header = etree.SubElement(root, "header",
+                                    datatype='xml',
+                                    segtype='block',
+                                    srclang=orglang,
+                                    adminlang=orglang,
+                                    creationtool=creationtool,
+                                    creationtoolversion=creationtoolversion,
+                                    **{'o-encoding': charset.lower()})
+        header.text = ""
+        body = etree.SubElement(root, "body")
+        # handle messages
+        d = {}
+        filename = '%s.tmx' % self._catalog.title
+        for msgkey, transunit in self._catalog.messages():
+            if isinstance(msgkey, unicode):
+                msgkey = msgkey.encode(charset)
+            tu = etree.SubElement(body, "tu", creationtool=creationtool,
+                                  creationtoolversion=creationtoolversion,
+                                  tuid=md5(msgkey).hexdigest(),
+                                  creationdate=creationdate)
+            for lang in transunit.keys():
+                if not transunit[lang]:
+                    transunit[lang] = msgkey
+                if isinstance(transunit[lang], unicode):
+                    transunit[lang] = transunit[lang].encode(charset)
+                tuv = etree.SubElement(tu, "tuv",
+                                       creationdate=creationdate)
+                tuv.set('{http://www.w3.org/XML/1998/namespace}lang', lang.lower())
+                seg = etree.SubElement(tuv, "seg")
+                seg.text = escape(transunit[lang])
+            for all_langs in self._catalog.get_languages():
+                if all_langs not in transunit.keys():
+                    tuv = etree.SubElement(tu, "tuv",
+                                           creationdate=creationdate)
+                    tuv.set('{http://www.w3.org/XML/1998/namespace}lang', all_langs.lower())
+                    seg = etree.SubElement(tuv, "seg")
+                    seg.text = escape(msgkey)
+        return etree.tostring(root, xml_declaration=True, encoding=charset,
+                              pretty_print=True) 

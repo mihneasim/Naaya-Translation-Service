@@ -47,7 +47,7 @@ class NyMessageCatalog(Persistent):
 
         # Here the message translations are stored
         self._messages = PersistentMapping()
-        self._po_headers = {}
+        self._po_headers = PersistentMapping()
 
     ### INyTranslationCatalog
 

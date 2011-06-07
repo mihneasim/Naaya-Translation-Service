@@ -22,6 +22,7 @@ from LanguageManagers import (NyPortalLanguageManager, NyLanguages)
 from NyMessageCatalog import NyMessageCatalog
 from NyNegotiator import NyNegotiator
 from interfaces import INyTranslationCatalog
+from ImportExport import TranslationsImportExport
 
 # used by get_namespace mainly (to prefill dtml vars)
 def to_unicode(x):
@@ -195,7 +196,7 @@ class NaayaI18n(Folder):
             {'label': u'Import', 'action': 'manage_Import_form'
              #,'help': ('Localizer', 'MC_importExport.stx')
             },
-            {'label': u'Export', 'action': 'manage_Export_form'
+            {'label': u'Export', 'action': 'manage_export'
              #,'help': ('Localizer', 'MC_importExport.stx')
             }) \
             + SimpleItem.manage_options
@@ -376,3 +377,51 @@ class NaayaI18n(Folder):
         """
         self.getSite().gl_change_site_defaultlang(language)
         if REQUEST: REQUEST.RESPONSE.redirect('manage_languages?save=ok')
+
+    #### Export Tab ####
+
+    security.declareProtected(view_management_screens, 'manage_export')
+    manage_export = PageTemplateFile('zpt/export_form', globals())
+
+    security.declareProtected(view_management_screens, 'manage_export_pot')
+    def manage_export_po(self, language, REQUEST):
+        """ Provides pot/po export file for download """
+        export_tool = TranslationsImportExport(self.get_catalog())
+        if language == 'locale.pot':
+            filename = language
+        else:
+            filename = '%s.po' % language
+        RESPONSE = REQUEST.RESPONSE
+        RESPONSE.setHeader('Content-type','application/data')
+        RESPONSE.setHeader('Content-Disposition',
+                           'inline;filename=%s' % filename)
+        return export_tool.export_po(language)
+
+    security.declareProtected(view_management_screens, 'manage_export_xliff')
+    def manage_export_xliff(self, export_all, language, REQUEST):
+        """ Provides xliff file for download """
+        fname = '%s_%s.xlf' % (self.get_catalog()._default_language, language)
+        RESPONSE = REQUEST.RESPONSE
+        # Generate the XLIFF file header
+        RESPONSE.setHeader('Content-Type', 'text/xml; charset=UTF-8')
+        RESPONSE.setHeader('Content-Disposition',
+                           'attachment; filename="%s"' % fname)
+        export_tool = TranslationsImportExport(self.get_catalog())
+        return export_tool.export_xliff(language,
+                                        export_all=bool(int(export_all)))
+
+    security.declareProtected(view_management_screens, 'manage_export_tmx')
+    def manage_export_tmx(self, REQUEST):
+        """ Provides tmx file for download """
+        cat = self.get_catalog()
+        fname = '%s.tmx' % cat.title
+        export_tool = TranslationsImportExport(cat)
+        header = export_tool.get_po_header(cat._default_language)
+        charset = header['charset']
+        RESPONSE = REQUEST.RESPONSE
+        # Generate the XLIFF file header
+        RESPONSE.setHeader('Content-Type', 'text/xml; charset=%s' % charset)
+        RESPONSE.setHeader('Content-Disposition',
+                           'attachment; filename="%s"' % fname)
+        
+        return export_tool.export_tmx()

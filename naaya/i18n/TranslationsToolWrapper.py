@@ -11,12 +11,16 @@ from zope.i18n.interfaces import ITranslationDomain
 from zope.component import queryUtility
 from zope.deprecation import deprecate
 from zope.app.component.hooks import getSite
+from AccessControl import ClassSecurityInfo
+from Globals import InitializeClass
 
 # Product imports
 from portal_tool import message_encode, message_decode
 from LanguageManagers import NyLanguages
 
 class TranslationsToolWrapper(object):
+
+    security = ClassSecurityInfo()
 
     def __init__(self, portal_i18n_catalog):
         self.catalog = portal_i18n_catalog
@@ -50,6 +54,7 @@ class TranslationsToolWrapper(object):
         """
         return message_decode(message)
 
+    security.declareProtected('Manage messages', 'tt_get_messages')
     def tt_get_messages(self, query, skey, rkey):
         """
         Returns a list of messages, filtered and sorted according with
@@ -91,6 +96,7 @@ class TranslationsToolWrapper(object):
         msgs = [val for (key, val) in t]
         return msgs
 
+    security.declarePublic('tt_get_languages_mapping')
     def tt_get_languages_mapping(self):
         """
         Returns the languages mapping without the english language.
@@ -147,3 +153,5 @@ class TranslationsToolWrapper(object):
         ut = queryUtility(ITranslationDomain, domain)
         kw['context'] = self.REQUEST
         return ut.translate(msgid, **kw)
+
+InitializeClass(TranslationsToolWrapper)
