@@ -13,7 +13,6 @@ from zope.app.component.hooks import getSite
 # Product imports
 from interfaces import INyTranslationCatalog
 
-# Do we still need this?
 def update_transaction_note():
     import transaction, re
 
@@ -80,6 +79,7 @@ class NyMessageCatalog(Persistent):
             default = msgid
         if lang is None:
         # Negotiate lang / rare: translation without ITranslationDomain utility!
+            import pdb; pdb.set_trace()
             if getSite() is not None:
                 i18n_tool = getSite().getPortalI18n()
             else:
@@ -94,6 +94,7 @@ class NyMessageCatalog(Persistent):
         # Add it if it's not in the dictionary
         if not self._message_exists(msgid):
             self._messages[msgid] = PersistentMapping()
+            update_transaction_note()
 
         if not self._messages[msgid].has_key(self._default_language):
             self._messages[msgid][self._default_language] = default

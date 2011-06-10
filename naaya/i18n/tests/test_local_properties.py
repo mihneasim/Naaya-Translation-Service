@@ -14,10 +14,15 @@ from Products.Naaya.tests.NaayaFunctionalTestCase import NaayaFunctionalTestCase
 # Product imports
 from naaya.i18n.LocalPropertyManager import LocalAttribute
 
+#class Gigel(LocalPropertyManager):
+#    culoare_ochi = LocalAttribute('culoare_ochi')
+#GigelNew.culoare_ochi
+
 class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
 
     def assertAttrValue(self, name, localized_value, effective_value):
         self.assertEqual(self.ob.getLocalProperty(name), localized_value)
+        #import pdb; pdb.set_trace()
         self.assertEqual(getattr(self.ob, name), effective_value)
 
     def setUp(self):

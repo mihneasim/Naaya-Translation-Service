@@ -383,7 +383,7 @@ class NaayaI18n(Folder):
     security.declareProtected(view_management_screens, 'manage_export')
     manage_export = PageTemplateFile('zpt/export_form', globals())
 
-    security.declareProtected(view_management_screens, 'manage_export_pot')
+    security.declareProtected(view_management_screens, 'manage_export_po')
     def manage_export_po(self, language, REQUEST):
         """ Provides pot/po export file for download """
         export_tool = TranslationsImportExport(self.get_catalog())

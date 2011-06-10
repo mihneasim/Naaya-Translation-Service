@@ -2,7 +2,6 @@
 # Python imports
 import time
 from datetime import datetime
-from cgi import escape
 try:
     # python 2.6
     from hashlib import md5
@@ -29,7 +28,6 @@ class TranslationsImportExport(object):
             x = x.replace(a, b)
         return x
 
-
     def get_po_header(self, lang):
         """ """
         # For backwards compatibility
@@ -38,7 +36,9 @@ class TranslationsImportExport(object):
 
         return self._catalog._po_headers.get(lang, empty_po_header)
 
-    ### Export methods:
+
+    ### Export methods ###
+
     def export_po(self, lang):
         """Exports the content of the message catalog either to a template
         file (locale.pot) or to an language specific PO file (<x>.po).
@@ -63,7 +63,7 @@ class TranslationsImportExport(object):
             language_team = '%s <%s>' % (lang, language_team)
 
         r = ['msgid ""',
-             'msgstr "Project-Id-Version: %s\\n"' % self._catalog.title,
+             'msgstr "Project-Id-Version: naaya.i18n\\n"',
              '"POT-Creation-Date: %s\\n"' % pot_creation_date,
              '"PO-Revision-Date: %s\\n"' % po_revision_date,
              '"Last-Translator: %s\\n"' % last_translator,
@@ -124,6 +124,8 @@ class TranslationsImportExport(object):
         header.text = ""
         body = etree.SubElement(root, "body")
 
+        # For the approved="yes|no" attribute of trans-unit
+        unapproved = []
         # Get the messages, and perhaps its translations.
         d = {}
         for msgkey, transunit in self._catalog.messages():
@@ -134,23 +136,31 @@ class TranslationsImportExport(object):
             if export_all == True or (export_all == False and tr_unit == ''):
                 d[msgkey] = tr_unit
                 if d[msgkey] == "":
+                    unapproved.append(msgkey)
                     d[msgkey] = msgkey
 
         # Generate sorted msgids to simplify diffs
         dkeys = d.keys()
         dkeys.sort()
         for msgkey in dkeys:
-            if isinstance(d[msgkey], unicode):
-                d[msgkey] = d[msgkey].encode('utf-8')
-            if isinstance(msgkey, unicode):
-                msgkey = msgkey.encode('utf-8')
+            approved = "yes"
+            if msgkey in unapproved:
+                approved = "no"
+            #if isinstance(d[msgkey], unicode):
+            #    d[msgkey] = d[msgkey].encode('utf-8')
+            #if isinstance(msgkey, unicode):
+            #    msgkey = msgkey.encode('utf-8')
 
             tr_unit = etree.SubElement(body, "trans-unit",
-                                       id=md5(msgkey).hexdigest())
+                                       id=md5(msgkey).hexdigest(),
+                                       approved=approved)
             source = etree.SubElement(tr_unit, "source")
-            source.text = escape(msgkey)
+            source.text = msgkey
             target = etree.SubElement(tr_unit, "target")
-            target.text = escape(d[msgkey])
+            target.set('{http://www.w3.org/XML/1998/namespace}lang', lang.lower())
+            if approved == "no":
+                target.set("state", "needs-review-translation")
+            target.text = d[msgkey]
 
         return etree.tostring(root, xml_declaration=True, encoding='utf-8',
                               pretty_print=True)
@@ -183,8 +193,6 @@ class TranslationsImportExport(object):
         d = {}
         filename = '%s.tmx' % self._catalog.title
         for msgkey, transunit in self._catalog.messages():
-            if isinstance(msgkey, unicode):
-                msgkey = msgkey.encode(charset)
             tu = etree.SubElement(body, "tu", creationtool=creationtool,
                                   creationtoolversion=creationtoolversion,
                                   tuid=md5(msgkey).hexdigest(),
@@ -192,19 +200,36 @@ class TranslationsImportExport(object):
             for lang in transunit.keys():
                 if not transunit[lang]:
                     transunit[lang] = msgkey
-                if isinstance(transunit[lang], unicode):
-                    transunit[lang] = transunit[lang].encode(charset)
                 tuv = etree.SubElement(tu, "tuv",
                                        creationdate=creationdate)
                 tuv.set('{http://www.w3.org/XML/1998/namespace}lang', lang.lower())
                 seg = etree.SubElement(tuv, "seg")
-                seg.text = escape(transunit[lang])
+                seg.text = transunit[lang]
             for all_langs in self._catalog.get_languages():
                 if all_langs not in transunit.keys():
                     tuv = etree.SubElement(tu, "tuv",
                                            creationdate=creationdate)
                     tuv.set('{http://www.w3.org/XML/1998/namespace}lang', all_langs.lower())
                     seg = etree.SubElement(tuv, "seg")
-                    seg.text = escape(msgkey)
+                    seg.text = msgkey
         return etree.tostring(root, xml_declaration=True, encoding=charset,
                               pretty_print=True) 
+
+
+    ### Import methods ###
+
+    def import_po(self, lang, data):
+        """ """
+        messages = self._messages
+
+        # Load the data
+        po = POFile(string=data)
+        for msgid in po.get_msgids():
+            if msgid:
+                msgstr = po.get_msgstr(msgid) or ''
+                if not messages.has_key(msgid):
+                    messages[msgid] = PersistentMapping()
+                messages[msgid][lang] = msgstr
+
+        # Set the encoding (the full header should be loaded XXX)
+        self.update_po_header(lang, charset=po.get_encoding())
