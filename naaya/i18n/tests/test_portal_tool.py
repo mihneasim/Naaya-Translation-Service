@@ -28,7 +28,8 @@ class TestPortalTool(NaayaTestCase):
         self.assertTrue(ILanguageAvailability.providedBy(
                            self.tool.get_portal_lang_manager()))
         self.assertTrue(INegotiator.providedBy(self.tool.get_negotiator()))
-        self.assertTrue(INyTranslationCatalog.providedBy(self.tool.get_catalog()))
+        self.assertTrue(INyTranslationCatalog.providedBy(
+                                               self.tool.get_message_catalog()))
 
 class TestNySiteApi(NaayaTestCase):
 

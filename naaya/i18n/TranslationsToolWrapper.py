@@ -24,7 +24,7 @@ class TranslationsToolWrapper(Implicit):
     security = ClassSecurityInfo()
 
     def __init__(self, portal_i18n):
-        self.catalog = portal_i18n.get_catalog()
+        self.catalog = portal_i18n.get_message_catalog()
         self.portal_i18n = portal_i18n
 
     security.declarePublic('get_msg_translations')

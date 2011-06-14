@@ -35,7 +35,8 @@ else:
             wrapper.gettext('Unkown', 'en')
         else:
             catalog = NaayaI18n('id', 'title',
-                                [('en', 'English'), ('de', 'German')]).get_catalog()
+                                [('en', 'English'), ('de', 'German')])\
+                      .get_message_catalog()
             catalog.edit_message('Administration', 'de', 'Verwaltung')
             catalog.gettext('Unkown', 'en')
             wrapper = TranslationsToolWrapper(catalog)

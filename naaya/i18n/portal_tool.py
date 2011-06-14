@@ -111,7 +111,7 @@ class NaayaI18n(Folder):
             # maybe debug/testing environment?
             return NyNegotiator()
 
-    def get_catalog(self):
+    def get_message_catalog(self):
         return self._catalog
 
     def get_lang_manager(self):
@@ -245,7 +245,7 @@ class NaayaI18n(Folder):
             query = re.compile('')
 
         messages = []
-        for m, t in self.get_catalog().messages():
+        for m, t in self.get_message_catalog().messages():
             if query.search(m) and (not empty or not t.get(lang, '').strip()):
                 messages.append(m)
         messages.sort(filter_sort)
@@ -275,15 +275,15 @@ class NaayaI18n(Folder):
         if message is None:
             if messages:
                 message = messages[0]
-                #translations = self.get_translations(message)
-                translation = self.get_catalog().gettext(message, lang, '')
+                translation = self.get_message_catalog()\
+                                  .gettext(message, lang, '')
                 message = to_unicode(message)
                 message_encoded = message_encode(message)
         else:
             message_encoded = message
             message = message_decode(message_encoded)
             #translations = self.get_translations(message)
-            translation = self.get_catalog().gettext(message, lang, '')
+            translation = self.get_message_catalog().gettext(message, lang, '')
             message = to_unicode(message)
         namespace['message'] = message
         namespace['message_encoded'] = message_encoded
@@ -324,8 +324,9 @@ class NaayaI18n(Folder):
         """
         message_encoded = message
         message = message_decode(message_encoded)
-        message_key = self.get_catalog()._get_message_key(message)
-        self.get_catalog().edit_message(message_key, language, translation)
+        message_key = self.get_message_catalog()._get_message_key(message)
+        self.get_message_catalog()\
+            .edit_message(message_key, language, translation)
 
         url = get_url(REQUEST.URL1 + '/manage_messages',
                       REQUEST['batch_start'], REQUEST['batch_size'],
@@ -339,8 +340,8 @@ class NaayaI18n(Folder):
     def manage_delMessage(self, message, REQUEST, RESPONSE):
         """ """
         message = message_decode(message)
-        message_key = self.get_catalog()._get_message_key(message)
-        self.get_catalog().del_message(message_key)
+        message_key = self.get_message_catalog()._get_message_key(message)
+        self.get_message_catalog().del_message(message_key)
 
         url = get_url(REQUEST.URL1 + '/manage_messages',
                       REQUEST['batch_start'], REQUEST['batch_size'],
@@ -370,7 +371,8 @@ class NaayaI18n(Folder):
         self.getSite().gl_del_site_languages(languages)
         if REQUEST: REQUEST.RESPONSE.redirect('manage_languages?save=ok')
 
-    security.declareProtected(view_management_screens, 'manage_changeDefaultLang')
+    security.declareProtected(view_management_screens,
+                              'manage_changeDefaultLang')
     def manage_changeDefaultLang(self, language, REQUEST=None):
         """
         Change the default portal language.
@@ -384,36 +386,37 @@ class NaayaI18n(Folder):
     manage_export = PageTemplateFile('zpt/export_form', globals())
 
     security.declareProtected(view_management_screens, 'manage_export_po')
-    def manage_export_po(self, language, REQUEST):
+    def manage_export_po(self, language, REQUEST, RESPONSE):
         """ Provides pot/po export file for download """
-        export_tool = TranslationsImportExport(self.get_catalog())
+        export_tool = TranslationsImportExport(self.get_message_catalog())
         if language == 'locale.pot':
             filename = language
         else:
             filename = '%s.po' % language
-        RESPONSE = REQUEST.RESPONSE
+        #RESPONSE = REQUEST.RESPONSE
         RESPONSE.setHeader('Content-type','application/data')
         RESPONSE.setHeader('Content-Disposition',
                            'inline;filename=%s' % filename)
         return export_tool.export_po(language)
 
     security.declareProtected(view_management_screens, 'manage_export_xliff')
-    def manage_export_xliff(self, export_all, language, REQUEST):
+    def manage_export_xliff(self, export_all, language, REQUEST, RESPONSE):
         """ Provides xliff file for download """
-        fname = '%s_%s.xlf' % (self.get_catalog()._default_language, language)
-        RESPONSE = REQUEST.RESPONSE
+        fname = ('%s_%s.xlf'
+                 % (self.get_message_catalog()._default_language, language))
+        #RESPONSE = REQUEST.RESPONSE
         # Generate the XLIFF file header
         RESPONSE.setHeader('Content-Type', 'text/xml; charset=UTF-8')
         RESPONSE.setHeader('Content-Disposition',
                            'attachment; filename="%s"' % fname)
-        export_tool = TranslationsImportExport(self.get_catalog())
+        export_tool = TranslationsImportExport(self.get_message_catalog())
         return export_tool.export_xliff(language,
                                         export_all=bool(int(export_all)))
 
     security.declareProtected(view_management_screens, 'manage_export_tmx')
     def manage_export_tmx(self, REQUEST):
         """ Provides tmx file for download """
-        cat = self.get_catalog()
+        cat = self.get_message_catalog()
         fname = '%s.tmx' % cat.title
         export_tool = TranslationsImportExport(cat)
         header = export_tool.get_po_header(cat._default_language)

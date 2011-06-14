@@ -73,10 +73,10 @@ class NyI18nTranslator(object):
             target_language = tool.get_negotiator().getLanguage(available,
                                                                 context)
         if default is not None:
-            raw = tool.get_catalog().gettext(msgid, target_language,
+            raw = tool.get_message_catalog().gettext(msgid, target_language,
                                              default=default)
         else:
-            raw = tool.get_catalog().gettext(msgid, target_language)
+            raw = tool.get_message_catalog().gettext(msgid, target_language)
         return interpolate(raw, mapping)
 
 def initialize(context):

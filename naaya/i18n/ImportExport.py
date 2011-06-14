@@ -9,6 +9,8 @@ except ImportError:
     # python 2.4
     from md5 import new as md5
 from lxml import etree
+import codecs
+import re
 
 # Empty header information for PO files (UTF-8 is the default encoding)
 empty_po_header = {'last_translator_name': '',
@@ -218,18 +220,61 @@ class TranslationsImportExport(object):
 
     ### Import methods ###
 
-    def import_po(self, lang, data):
+    def import_po(self, lang, filepath):
         """ """
         messages = self._messages
 
         # Load the data
-        po = POFile(string=data)
-        for msgid in po.get_msgids():
-            if msgid:
-                msgstr = po.get_msgstr(msgid) or ''
-                if not messages.has_key(msgid):
-                    messages[msgid] = PersistentMapping()
-                messages[msgid][lang] = msgstr
+        f = codecs.open(filepath, 'rb', encoding='utf-8')
+        line = f.readline()
+        BEFORE_HEADER = 0; IN_HEADER = 1; IN_MAPPINGS = 2
+        encoding_pat = re.compile(r'charset=([a-z0-9-]*)', re.IGNORECASE)
+        msgid_pat = re.compile(r'^msgid[\t\s]+"(.*?)"$', re.IGNORECASE)
+        msgstr_pat = re.compile(r'^msgstr[\t\s]+"(.*?)"$', re.IGNORECASE)
+        status = BEFORE_HEADER
+        encoding = None
+        msgid = None
+        data = {}
+        cnt = 0
+        while line:
+            cnt += 1
+            line = line.strip()
+            if line:
+                if state is BEFORE_HEADER:
+                    if line == 'msgid ""':
+                        state = IN_HEADER
+                elif state is IN_HEADER:
+                    enc = encoding_pat.search(line)
+                    if enc is not None:
+                        encoding = enc.groups()[0]
+                        if encoding.lower() not in ('utf8', 'utf-8'):
+                            raise ValueError("Only import utf-8 encoded files")
+                elif state is IN_MAPPINGS:
+                    if encoding is None:
+                        raise ValueError(("Missing encoding specification in"
+                                          " PO headers. "
+                                          "Only import utf-8 encoded files"))
+                    if msgid is not None and line.startswith('msgstr '):
+                        match = msgstr_pat.search(line)
+                        if match is None:
+                            raise ValueError("Error reading msgstr at line %d"
+                                             % cnt)
+                        else:
+                            data[msgid] = match.groups()[0]
+                            msgid = None
+                    match = msgid_pat.search(line)
+                    if match is not None:
+                        msgid = match.groups()[0]
+                else:
+                    raise Error('Undefined state in parsing .po file')
+            line = f.readline()
+        import pdb; pdb.set_trace()
+        #for msgid in po.get_msgids():
+        #    if msgid:
+        #        msgstr = po.get_msgstr(msgid) or ''
+        #        if not messages.has_key(msgid):
+        #            messages[msgid] = PersistentMapping()
+        #        messages[msgid][lang] = msgstr
 
         # Set the encoding (the full header should be loaded XXX)
-        self.update_po_header(lang, charset=po.get_encoding())
+        #self.update_po_header(lang, charset=po.get_encoding())

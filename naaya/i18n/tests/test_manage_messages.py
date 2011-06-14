@@ -13,8 +13,9 @@ class TestManageMessagesInZmi(NaayaFunctionalTestCase):
         # add a second language:
         self.portal.getPortalI18n().add_language('de')
         # and a msgid
-        self.portal.getPortalI18n().get_catalog().clear()
-        self.portal.getPortalI18n().get_catalog().gettext('${cnt} cats', 'de')
+        self.portal.getPortalI18n().get_message_catalog().clear()
+        self.portal.getPortalI18n().get_message_catalog()\
+                                   .gettext('${cnt} cats', 'de')
         import transaction; transaction.commit()
 
     def test_msgid_exists(self):
@@ -51,11 +52,13 @@ class TestManageMessagesInZmi(NaayaFunctionalTestCase):
                 break
         self.browser.go(found.attrib['href'])
         form = self.browser.get_form('translate_message')
-        self.browser.clicked(form, self.browser.get_form_field(form, 'translation:utf8:ustring'))
+        self.browser.clicked(form,
+                  self.browser.get_form_field(form, 'translation:utf8:ustring'))
         form['translation:utf8:ustring'] = '${cnt} Katzen'
         self.browser.submit(fieldname='manage_editMessage:method')
         self.assertEqual('${cnt} Katzen',
-         self.portal.getPortalI18n().get_catalog().gettext('${cnt} cats', 'de'))
+         self.portal.getPortalI18n().get_message_catalog()\
+                                    .gettext('${cnt} cats', 'de'))
 
     def test_delete_msgid(self):
         self.browser.go('http://localhost/portal/portal_i18n/manage_messages?lang=de')
@@ -69,7 +72,8 @@ class TestManageMessagesInZmi(NaayaFunctionalTestCase):
         self.browser.go(found.attrib['href'])
 
         form = self.browser.get_form('translate_message')
-        self.browser.clicked(form, self.browser.get_form_field(form, 'translation:utf8:ustring'))
+        self.browser.clicked(form,
+                  self.browser.get_form_field(form, 'translation:utf8:ustring'))
         self.browser.submit(fieldname='manage_delMessage:method')
 
         self.browser.go('http://localhost/portal/portal_i18n/manage_messages?lang=de')

@@ -118,7 +118,7 @@ class _TranslationCatalog(unittest.TestCase):
 class NyMessageCatalogTest(NaayaTestCase, _TranslationCatalog):
     def catalog_factory(self, **kw):
         """ clean, add extra langs and return catalog from portal_i18n """
-        catalog = self.portal.getPortalI18n().get_catalog()
+        catalog = self.portal.getPortalI18n().get_message_catalog()
         # erase catalog
         catalog.clear()
         for lang in catalog.get_languages():

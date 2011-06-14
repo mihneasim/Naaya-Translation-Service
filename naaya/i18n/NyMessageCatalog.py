@@ -135,6 +135,14 @@ class NyMessageCatalog(Persistent):
     def _message_exists(self, message):
         return self._messages.has_key(message)
 
+    ### Dictionary-like API
+
+    def __getitem__(self, key):
+        return self._messages[key]
+
+    def __delitem__(self, key):
+        del self._messages[key]
+
     ##### OTHER | PRIVATE #####
     # could we get rid of this if we normalize the format (byte string/unicode)?
     def _get_message_key(self, message):
