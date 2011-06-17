@@ -21,10 +21,10 @@ class NySitePublishTraverse(DefaultPublishTraverse):
 
     def publishTraverse(self, request, name):
         portal = request.PARENTS[-1]
-        print "Publish traverse:" + request['PATH_TRANSLATED']
+        #print "Publish traverse:" + request['PATH_TRANSLATED']
         setNySite(portal)
         i18n_tool = portal.getPortalI18n()
-        if (name and
+        if (name and i18n_tool is not None and
             name in i18n_tool.get_portal_lang_manager().getAvailableLanguages()):
             request[i18n_tool.get_negotiator().cookie_id] = name
             return portal

@@ -6,6 +6,7 @@ from time import time
 from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from ExtensionClass import Base
+from zope.deprecation import deprecate
 #from zope.app.component.hooks import getSite
 from patches import getNySite as getSite
 
@@ -157,11 +158,24 @@ class LocalPropertyManager(object):
 
     ### For compatibility with old property manager - for here/get_lang..
     security.declarePublic('get_languages_mapping')
+    @deprecate(("Calling language related methods on objects is deprecated."
+                " Call them on NySite_instance.getPortalI18n() instead"))
     def get_languages_mapping(self):
+        """ """
         return self.get_portal_i18n().get_languages_mapping()
 
     security.declarePublic('get_language_name')
+    @deprecate(("Calling language related methods on objects is deprecated."
+                " Call them on NySite_instance.getPortalI18n() instead"))
     def get_language_name(self, lang):
+        """ """
         return self.get_portal_i18n().get_language_name(lang)
+
+    security.declarePublic('get_selected_language')
+    @deprecate(("Calling language related methods on objects is deprecated."
+                " Call them on NySite_instance.getPortalI18n() instead"))
+    def get_selected_language(self):
+        """ """
+        return self.get_portal_i18n().get_selected_language()
 
 InitializeClass(LocalPropertyManager)

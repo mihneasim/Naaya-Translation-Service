@@ -166,8 +166,8 @@ class TranslationsToolWrapper(Implicit):
     ## used to be in Localizer/MessageCatalog
     # In Naaya: Session messages are translated using this
     security.declarePublic('translate')
-    @deprecate("Translate method shouldn't be called on catalog;" +
-               " call the translate of ITranslationDomain utility")
+    @deprecate(("Translate method shouldn't be called on message catalog;"
+                " call the translate of ITranslationDomain utility"))
     def translate(self, domain, msgid, *args, **kw):
         """This method is required to get the i18n namespace from ZPT working.
         """

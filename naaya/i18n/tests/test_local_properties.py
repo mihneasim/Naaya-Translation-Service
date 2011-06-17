@@ -29,7 +29,7 @@ class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
         super(LocalPropertyManagerTestSuite, self).setUp()
         self.ob = self.portal.info.accessibility
         # This is usualy made in Publish:
-        setNySite(self.portal)
+        #setNySite(self.portal)
 
     def test_inexistent(self):
         self.assertRaises(AttributeError, self.assertAttrValue,
