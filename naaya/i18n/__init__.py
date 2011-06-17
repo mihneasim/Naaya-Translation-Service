@@ -2,19 +2,13 @@
 # Zope imports
 from zope.i18n.interfaces import ITranslationDomain
 from zope.interface import implements
-from zope.component import queryUtility, adapts
 from App.ImageFile import ImageFile
 from Globals import InitializeClass
 from zope.i18n import interpolate
-from zope.publisher.interfaces import IRequest
-from ZPublisher.BaseRequest import DefaultPublishTraverse
-#from zope.app.component.interfaces import ISite
-
-# Naaya imports
-from Products.Naaya.interfaces import INySite
 
 # Product imports
 from portal_tool import NaayaI18n, manage_addNaayaI18n
+import patches
 
 try:
     from Products import Localizer
@@ -40,21 +34,6 @@ else:
             return localizer.translate(msgid, mapping, context, target_language,
                                        default)
 
-class NySitePublishTraverse(DefaultPublishTraverse):
-    adapts(INySite, IRequest)
-
-    def fallback(self, request, name):
-        sup = super(NySitePublishTraverse, self)
-        return sup.publishTraverse(request, name)
-
-    def publishTraverse(self, request, name):
-        portal = request.PARENTS[-1]
-        i18n_tool = portal.getPortalI18n()
-        if (name and
-            name in i18n_tool.get_portal_lang_manager().getAvailableLanguages()):
-            request[i18n_tool.get_negotiator().cookie_id] = name
-            return portal
-        return self.fallback(request, name)
 
 class NyI18nTranslator(object):
 
@@ -78,6 +57,7 @@ class NyI18nTranslator(object):
         else:
             raw = tool.get_message_catalog().gettext(msgid, target_language)
         return interpolate(raw, mapping)
+
 
 def initialize(context):
     """ """

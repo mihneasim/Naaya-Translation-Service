@@ -14,8 +14,13 @@ from interfaces import INyLanguageManagement
 
 
 def normalize_code(code):
-    not_letter = re.compile(r'[^a-z]+')
-    return re.sub(not_letter, '-', code.lower())
+    not_letter = re.compile(r'[^a-z]+', re.IGNORECASE)
+    parts = re.sub(not_letter, '-', code).split('-', 1)
+    parts[0] = parts[0].lower()
+    if len(parts) > 1:
+        return parts[0] + '-' + parts[1].upper()
+    else:
+        return parts[0]
 
 class NyLanguages(object):
 

@@ -11,12 +11,15 @@ from zope.component import queryUtility
 from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
 from Products.Naaya.tests.NaayaFunctionalTestCase import NaayaFunctionalTestCase
 
+# Product imports
+from naaya.i18n.NyNegotiator import NyNegotiator
+
 class NegotiatorTestSuite(NaayaTestCase):
 
     cookie_id = 'LOCALIZER_LANGUAGE'
 
     def setUp(self):
-        self.negotiator = queryUtility(INegotiator)
+        self.negotiator = NyNegotiator()
         self.req = self.portal.REQUEST
         self.req['HTTP_ACCEPT_LANGUAGE'] = 'pt-br'
         self.req.cookies[self.cookie_id] = 'es'
@@ -24,7 +27,7 @@ class NegotiatorTestSuite(NaayaTestCase):
         self.req.form[self.cookie_id] = 'fr'
 
     def test_negotiation_cache(self):
-        client_langs = {'browser': 'pt-br',
+        client_langs = {'browser': 'pt-BR',
                         'path': 'de',
                         'cookie': 'es',
                         'url': 'fr'}
@@ -56,15 +59,15 @@ class NegotiatorTestSuite(NaayaTestCase):
     def test_negotiate_browser(self):
         self.negotiator.set_policy('browser')
         result = self.negotiator.getLanguage(('en', 'pt_BR', 'fr'), self.req)
-        self.assertEqual(result, 'pt-br')
+        self.assertEqual(result, 'pt-BR')
 
     def test_negotiate_partial(self):
         self.negotiator.set_policy('cookie')
         self.req.cookies[self.cookie_id] = 'pt-un'
         result = self.negotiator.getLanguage(('en', 'pt-br', 'pt-un', 'fr'), self.req)
-        self.assertEqual(result, 'pt-un')
+        self.assertEqual(result, 'pt-UN')
         result = self.negotiator.getLanguage(('en', 'pt-br', 'fr'), self.req)
-        self.assertEqual(result, 'pt-br')
+        self.assertEqual(result, 'pt-BR')
         result = self.negotiator.getLanguage(('en', 'pt', 'fr'), self.req)
         self.assertEqual(result, 'pt')
 

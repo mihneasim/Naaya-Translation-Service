@@ -14,9 +14,9 @@ from naaya.i18n.LanguageManagers import (NyLanguages,
 class NyLanguageManagerTest(unittest.TestCase):
 
     def test_normalize_code(self):
-        sets = [('pt-br', 'pt-br'), ('en', 'en'), ('ro_RO', 'ro-ro'),
-                ('PT BR', 'pt-br'), ('pt - br', 'pt-br'),
-                ('sk-Cyrillic', 'sk-cyrillic')]
+        sets = [('pt-br', 'pt-BR'), ('en', 'en'), ('ro_RO', 'ro-RO'),
+                ('PT BR', 'pt-BR'), ('pt - br', 'pt-BR'),
+                ('sk-Cyrillic', 'sk-CYRILLIC')]
         for (input, expected) in sets:
             self.assertEqual(normalize_code(input), expected)
 
@@ -43,11 +43,11 @@ class NyLanguageManagerTest(unittest.TestCase):
         lang_manager = NyLanguages()
         lang_manager.add_language('en-pt', 'Pirate English')
         count0 = len(lang_manager.langs)
-        lang_manager.del_language('en-pt')
+        lang_manager.del_language('en-PT')
         # One more time
-        self.assertRaises(KeyError, lang_manager.del_language, 'en-pt')
+        self.assertRaises(KeyError, lang_manager.del_language, 'en-PT')
         self.assertEqual(len(lang_manager.langs), count0 - 1)
-        self.assertEqual(lang_manager.get_language_name('en-pt'), '???')
+        self.assertEqual(lang_manager.get_language_name('en-PT'), '???')
     
 class NyPortalLanguageManagerTest(unittest.TestCase):
 

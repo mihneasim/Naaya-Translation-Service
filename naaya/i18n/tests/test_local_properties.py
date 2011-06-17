@@ -6,6 +6,7 @@ import re
 
 # Zope imports
 import transaction
+from zope.app.component.site import threadSiteSubscriber
 
 # Naaya imports
 from Products.NaayaBase.NyContentType import NyContentData
@@ -13,21 +14,22 @@ from Products.Naaya.tests.NaayaFunctionalTestCase import NaayaFunctionalTestCase
 
 # Product imports
 from naaya.i18n.LocalPropertyManager import LocalAttribute
+from naaya.i18n.patches import setNySite
 
-#class Gigel(LocalPropertyManager):
-#    culoare_ochi = LocalAttribute('culoare_ochi')
-#GigelNew.culoare_ochi
 
 class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
 
     def assertAttrValue(self, name, localized_value, effective_value):
         self.assertEqual(self.ob.getLocalProperty(name), localized_value)
-        #import pdb; pdb.set_trace()
+        atr = getattr(self.ob, name)
         self.assertEqual(getattr(self.ob, name), effective_value)
+
 
     def setUp(self):
         super(LocalPropertyManagerTestSuite, self).setUp()
-        self.ob = self.portal.info
+        self.ob = self.portal.info.accessibility
+        # This is usualy made in Publish:
+        setNySite(self.portal)
 
     def test_inexistent(self):
         self.assertRaises(AttributeError, self.assertAttrValue,
@@ -42,9 +44,14 @@ class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
         self.assertAttrValue('specific', 'English', 'English')
 
     def test_alsolocalized(self):
-        self.ob._setLocalPropValue('specific', 'en', 'English')
-        setattr(self.ob, 'specific', 'unlocalized_value')
-        self.assertAttrValue('specific', 'English', 'English')
+        self.ob._setLocalPropValue('title', 'en', 'English Title')
+        self.assertAttrValue('title', 'English Title', 'English Title')
+        setattr(self.ob, 'title', 'title attr')
+        self.assertAttrValue('title', 'English Title', 'title attr')
+
+        self.ob._setLocalPropValue('unspecific', 'en', 'English')
+        setattr(self.ob, 'unspecific', 'unlocalized_value')
+        self.assertAttrValue('unspecific', 'English', 'unlocalized_value')
 
 
 class LocalPropertiesFunctionalTestSuite(NaayaFunctionalTestCase):

@@ -6,7 +6,8 @@ from time import time
 from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from ExtensionClass import Base
-from zope.app.component.hooks import getSite
+#from zope.app.component.hooks import getSite
+from patches import getNySite as getSite
 
 
 class LocalAttribute(Base):
@@ -57,8 +58,10 @@ class LocalPropertyManager(object):
     def set_localpropvalue(self, id, lang, value):
         # Get previous value
         old_value = self.getLocalAttribute(id, lang)
-        # Update value only if it is different
-        if value != old_value:
+        # Update value only if it is different or new
+        if not self.hasLocalProperty(id):
+            self.set_localproperty(id, str(type(value)), lang, value)
+        elif value != old_value:
             properties = self._local_properties.copy()
             if not properties.has_key(id):
                 properties[id] = {}

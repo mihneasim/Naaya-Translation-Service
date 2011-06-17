@@ -3,7 +3,8 @@
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
 from ZPublisher.Request import Request
-from zope.app.component.hooks import getSite
+#from zope.app.component.hooks import getSite
+from patches import getNySite as getSite
 
 # Product imports
 from LanguageManagers import normalize_code

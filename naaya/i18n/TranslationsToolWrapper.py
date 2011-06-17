@@ -10,7 +10,8 @@ from zope.i18n import interpolate
 from zope.i18n.interfaces import ITranslationDomain
 from zope.component import queryUtility
 from zope.deprecation import deprecate
-from zope.app.component.hooks import getSite
+#from zope.app.component.hooks import getSite
+from patches import getNySite as getSite
 from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from Acquisition import Implicit

@@ -2,12 +2,11 @@
 # Python imports
 
 # Zope imports
-from Globals import PersistentMapping, InitializeClass
+from Globals import PersistentMapping
 from OFS.SimpleItem import SimpleItem
 from Persistence import Persistent
 from ZPublisher import HTTPRequest
 from zope.interface import implements
-from AccessControl import ClassSecurityInfo
 from zope.app.component.hooks import getSite
 
 # Product imports
@@ -33,7 +32,6 @@ class NyMessageCatalog(Persistent):
 
     implements(INyTranslationCatalog)
 
-    security = ClassSecurityInfo()
 
     def __init__(self, id, title, languages=('en', )):
 
@@ -64,12 +62,18 @@ class NyMessageCatalog(Persistent):
         if self._messages.has_key(msgid):
             del self._messages[msgid]
 
-    security.declarePublic('gettext')
     def gettext(self, msgid, lang=None, default=None):
         """Returns the corresponding translation of msgid in Catalog.
         """
-        if not isinstance(msgid, (str, unicode)):
-            raise TypeError, 'only strings can be translated.'
+        msgstr = None
+        if not isinstance(msgid, basestring):
+            raise TypeError('Only strings can be translated.')
+        # saving everything unicode, utf-8
+        elif isinstance(msgid, str):
+            msgstr = msgid
+            msgid = msgid.decode('utf-8')
+        if not lang:
+            raise ValueError("No language provided for gettext")
         msgid = msgid.strip()
         # empty message is translated as empty message, regardless of lang
         if not msgid:
@@ -77,15 +81,6 @@ class NyMessageCatalog(Persistent):
         # default `default translation` is the msgid itself
         if default is None:
             default = msgid
-        if lang is None:
-        # Negotiate lang / rare: translation without ITranslationDomain utility!
-            import pdb; pdb.set_trace()
-            if getSite() is not None:
-                i18n_tool = getSite().getPortalI18n()
-            else:
-                i18n_tool = self.getSite().getPortalI18n()
-            lang = i18n_tool.get_negotiator().getLanguage(
-                    i18n_tool.get_portal_lang_manager().getAvailableLanguages())
 
         if lang not in self.get_languages():
             # we don't have that lang, thus we can't translate and won't add msg
@@ -93,6 +88,11 @@ class NyMessageCatalog(Persistent):
 
         # Add it if it's not in the dictionary
         if not self._message_exists(msgid):
+            if msgstr is not None:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warn('Got str "%s" in gettext, expecting unicode'
+                            % msgstr)
             self._messages[msgid] = PersistentMapping()
             update_transaction_note()
 
@@ -142,20 +142,3 @@ class NyMessageCatalog(Persistent):
 
     def __delitem__(self, key):
         del self._messages[key]
-
-    ##### OTHER | PRIVATE #####
-    # could we get rid of this if we normalize the format (byte string/unicode)?
-    def _get_message_key(self, message):
-        if self._message_exists(message):
-            return message
-        # A message may be stored as unicode or byte string
-        encoding = HTTPRequest.default_encoding
-        if isinstance(message, unicode):
-            message = message.encode(encoding)
-        else:
-            message = unicode(message, encoding)
-        if self._message_exists(message):
-            return message
-        return None
-
-InitializeClass(NyMessageCatalog)

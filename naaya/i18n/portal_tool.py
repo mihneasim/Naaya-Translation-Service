@@ -18,7 +18,8 @@ from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 from constants import ID_NAAYAI18N, TITLE_NAAYAI18N, METATYPE_NAAYAI18N
 
 # Product imports
-from LanguageManagers import (NyPortalLanguageManager, NyLanguages)
+from LanguageManagers import NyPortalLanguageManager, NyLanguages
+from LanguageManagers import normalize_code
 from NyMessageCatalog import NyMessageCatalog
 from NyNegotiator import NyNegotiator
 from interfaces import INyTranslationCatalog
@@ -98,8 +99,11 @@ class NaayaI18n(Folder):
     def __init__(self, id, title, languages=[('en', 'English')]):
         self.id = id
         self.title = title
-        self._portal_langs = NyPortalLanguageManager(languages)
-        lang_codes = tuple([x[0] for x in languages])
+        n_languages = []
+        for (code, name) in languages:
+            n_languages.append((normalize_code(code), name))
+        self._portal_langs = NyPortalLanguageManager(n_languages)
+        lang_codes = tuple([x[0] for x in n_languages])
         catalog = NyMessageCatalog('translation_catalog', 'Translation Catalog',
                                     lang_codes)
         self._catalog = catalog
@@ -121,6 +125,9 @@ class NaayaI18n(Folder):
 
     def get_portal_lang_manager(self):
         return self._portal_langs
+
+    def get_importexport_tool(self):
+        return TranslationsImportExport(self.get_message_catalog())
 
     ### More specific methods:
     def get_language_name(self, code):
@@ -149,6 +156,7 @@ class NaayaI18n(Folder):
     def add_language(self, lang_code, lang_name=None):
         if not lang_code:
             raise ValueError('No language code provided')
+        lang_code = normalize_code(lang_code)
         if lang_name is None:
             # search for name directly in languages.txt, obviously not in site
             lang_name = self.get_lang_manager().get_language_name(lang_code)
@@ -193,7 +201,7 @@ class NaayaI18n(Folder):
         options = (
             {'label': u'Messages', 'action': 'manage_messages'},
             {'label': u'Languages', 'action': 'manage_languages'},
-            {'label': u'Import', 'action': 'manage_Import_form'
+            {'label': u'Import', 'action': 'manage_import'
              #,'help': ('Localizer', 'MC_importExport.stx')
             },
             {'label': u'Export', 'action': 'manage_export'
@@ -323,8 +331,7 @@ class NaayaI18n(Folder):
         """Modifies a message.
         """
         message_encoded = message
-        message = message_decode(message_encoded)
-        message_key = self.get_message_catalog()._get_message_key(message)
+        message_key = message_decode(message_encoded)
         self.get_message_catalog()\
             .edit_message(message_key, language, translation)
 
@@ -339,8 +346,7 @@ class NaayaI18n(Folder):
     security.declareProtected('Manage messages', 'manage_delMessage')
     def manage_delMessage(self, message, REQUEST, RESPONSE):
         """ """
-        message = message_decode(message)
-        message_key = self.get_message_catalog()._get_message_key(message)
+        message_key = message_decode(message)
         self.get_message_catalog().del_message(message_key)
 
         url = get_url(REQUEST.URL1 + '/manage_messages',
@@ -388,12 +394,11 @@ class NaayaI18n(Folder):
     security.declareProtected(view_management_screens, 'manage_export_po')
     def manage_export_po(self, language, REQUEST, RESPONSE):
         """ Provides pot/po export file for download """
-        export_tool = TranslationsImportExport(self.get_message_catalog())
+        export_tool = self.get_importexport_tool()
         if language == 'locale.pot':
             filename = language
         else:
             filename = '%s.po' % language
-        #RESPONSE = REQUEST.RESPONSE
         RESPONSE.setHeader('Content-type','application/data')
         RESPONSE.setHeader('Content-Disposition',
                            'inline;filename=%s' % filename)
@@ -404,27 +409,47 @@ class NaayaI18n(Folder):
         """ Provides xliff file for download """
         fname = ('%s_%s.xlf'
                  % (self.get_message_catalog()._default_language, language))
-        #RESPONSE = REQUEST.RESPONSE
         # Generate the XLIFF file header
         RESPONSE.setHeader('Content-Type', 'text/xml; charset=UTF-8')
         RESPONSE.setHeader('Content-Disposition',
                            'attachment; filename="%s"' % fname)
-        export_tool = TranslationsImportExport(self.get_message_catalog())
+        export_tool = self.get_importexport_tool()
         return export_tool.export_xliff(language,
                                         export_all=bool(int(export_all)))
 
     security.declareProtected(view_management_screens, 'manage_export_tmx')
-    def manage_export_tmx(self, REQUEST):
+    def manage_export_tmx(self, REQUEST, RESPONSE):
         """ Provides tmx file for download """
         cat = self.get_message_catalog()
         fname = '%s.tmx' % cat.title
-        export_tool = TranslationsImportExport(cat)
+        export_tool = self.get_importexport_tool()
         header = export_tool.get_po_header(cat._default_language)
         charset = header['charset']
-        RESPONSE = REQUEST.RESPONSE
         # Generate the XLIFF file header
         RESPONSE.setHeader('Content-Type', 'text/xml; charset=%s' % charset)
         RESPONSE.setHeader('Content-Disposition',
                            'attachment; filename="%s"' % fname)
-        
         return export_tool.export_tmx()
+
+    #### Import Tab ####
+
+    security.declareProtected(view_management_screens, 'manage_import')
+    manage_import = PageTemplateFile('zpt/import_form', globals())
+
+    security.declareProtected(view_management_screens, 'manage_import_po')
+    def manage_import_po(self, file, language, REQUEST, RESPONSE):
+        """ Import PO file into catalog, for an existing language """
+        if language not in self.get_portal_lang_manager().getAvailableLanguages():
+            raise ValueError('%s language is not available in portal' % language)
+        else:
+            import_tool = self.get_importexport_tool()
+            import_tool.import_po(language, file)
+        RESPONSE.redirect('manage_import?save=ok')
+
+    security.declareProtected(view_management_screens, 'manage_import_tmx')
+    def manage_import_tmx(self, file, language, REQUEST, RESPONSE):
+        raise NotImplementedError("Tmx import is not yet implemented")
+
+    security.declareProtected(view_management_screens, 'manage_import_xliff')
+    def manage_import_xliff(self, file, language, REQUEST, RESPONSE):
+        raise NotImplementedError("Xliff import is not yet implemented")

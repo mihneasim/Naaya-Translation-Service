@@ -6,7 +6,7 @@
    <five:registerPackage package="." initialize=".initialize" />
 
    <zope:adapter
-         factory=".NySitePublishTraverse"
+         factory=".patches.NySitePublishTraverse"
       />
 
    <naaya:utility
@@ -15,26 +15,4 @@
       name="default"
       />
 
-<!--
-
-   <includeOverrides file="overrides.zcml" />
-
-   <naaya:utility
-      factory=".NyLocalizerTranslator"
-      provides="zope.i18n.interfaces.ITranslationDomain"
-      name="default"
-      />
-
-   <naaya:utility
-      factory=".NyTranslator"
-      provides="zope.i18n.interfaces.IModifiableUserPreferredLanguages"
-      name="default"
-      />
-
-   <naaya:utility
-      factory=".NyTranslator"
-      provides=".interfaces.INyLanguageManagement"
-      name="default"
-      />
--->
 </configure>

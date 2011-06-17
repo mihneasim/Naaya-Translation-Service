@@ -3,6 +3,7 @@
 # Python imports
 import time
 from datetime import datetime
+from StringIO import StringIO
 
 # Naaya imports
 from Products.Naaya.tests.NaayaTestCase import NaayaTestCase
@@ -116,3 +117,14 @@ class ImportExportTestSuite(NaayaTestCase):
     def test_export_tmx(self):
         exported = self.tool.export_tmx()
         self.assertEqual(exported, expected_tmx())
+
+    def test_export_import(self):
+        exported = self.tool.export_po('de')
+        self.assertEqual(exported, expected_po_de())
+        self.catalog.clear()
+        bytestream = StringIO(exported)
+        self.tool.import_po('de', bytestream)
+        self.assertEqual(self.catalog.gettext('Administration', 'de'),
+                         'Verwaltung')
+        self.assertTrue(self.catalog.gettext('${x} <b>"apples"</b>', 'de') ==
+                         u'${x} <b>"Äpfel"</b>')

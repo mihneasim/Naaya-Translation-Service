@@ -24,8 +24,14 @@ class TranslationsImportExport(object):
     def __init__(self, catalog):
         self._catalog = catalog
 
-    def backslashescape(self, x):
+    def backslash_escape(self, x):
         trans = [('"', '\\"'), ('\n', '\\n'), ('\r', '\\r'), ('\t', '\\t')]
+        for a, b in trans:
+            x = x.replace(a, b)
+        return x
+
+    def backslash_unescape(self, x):
+        trans = [('\\"', '"'), ('\\n', '\n'), ('\\r', '\r'), ('\\t', '\t')]
         for a, b in trans:
             x = x.replace(a, b)
         return x
@@ -95,9 +101,9 @@ class TranslationsImportExport(object):
         dkeys = d.keys()
         dkeys.sort(key=lambda key: (isinstance(key,unicode) and key.encode('utf-8') or key))
         for k in dkeys:
-            r.append('msgid "%s"' % self.backslashescape(k))
+            r.append('msgid "%s"' % self.backslash_escape(k))
             v = d[k]
-            r.append('msgstr "%s"' % self.backslashescape(v))
+            r.append('msgstr "%s"' % self.backslash_escape(v))
             r.append('')
 
         r2 = []
@@ -154,7 +160,7 @@ class TranslationsImportExport(object):
             #    msgkey = msgkey.encode('utf-8')
 
             tr_unit = etree.SubElement(body, "trans-unit",
-                                       id=md5(msgkey).hexdigest(),
+                                       id=md5(msgkey.encode('utf-8')).hexdigest(),
                                        approved=approved)
             source = etree.SubElement(tr_unit, "source")
             source.text = msgkey
@@ -197,7 +203,7 @@ class TranslationsImportExport(object):
         for msgkey, transunit in self._catalog.messages():
             tu = etree.SubElement(body, "tu", creationtool=creationtool,
                                   creationtoolversion=creationtoolversion,
-                                  tuid=md5(msgkey).hexdigest(),
+                                  tuid=md5(msgkey.encode('utf-8')).hexdigest(),
                                   creationdate=creationdate)
             for lang in transunit.keys():
                 if not transunit[lang]:
@@ -220,18 +226,15 @@ class TranslationsImportExport(object):
 
     ### Import methods ###
 
-    def import_po(self, lang, filepath):
-        """ """
-        messages = self._messages
+    def import_po(self, lang, filehandler):
 
         # Load the data
-        f = codecs.open(filepath, 'rb', encoding='utf-8')
-        line = f.readline()
+        line = filehandler.readline()
         BEFORE_HEADER = 0; IN_HEADER = 1; IN_MAPPINGS = 2
         encoding_pat = re.compile(r'charset=([a-z0-9-]*)', re.IGNORECASE)
         msgid_pat = re.compile(r'^msgid[\t\s]+"(.*?)"$', re.IGNORECASE)
         msgstr_pat = re.compile(r'^msgstr[\t\s]+"(.*?)"$', re.IGNORECASE)
-        status = BEFORE_HEADER
+        state = BEFORE_HEADER
         encoding = None
         msgid = None
         data = {}
@@ -249,6 +252,7 @@ class TranslationsImportExport(object):
                         encoding = enc.groups()[0]
                         if encoding.lower() not in ('utf8', 'utf-8'):
                             raise ValueError("Only import utf-8 encoded files")
+                        state = IN_MAPPINGS
                 elif state is IN_MAPPINGS:
                     if encoding is None:
                         raise ValueError(("Missing encoding specification in"
@@ -267,14 +271,12 @@ class TranslationsImportExport(object):
                         msgid = match.groups()[0]
                 else:
                     raise Error('Undefined state in parsing .po file')
-            line = f.readline()
-        import pdb; pdb.set_trace()
-        #for msgid in po.get_msgids():
-        #    if msgid:
-        #        msgstr = po.get_msgstr(msgid) or ''
-        #        if not messages.has_key(msgid):
-        #            messages[msgid] = PersistentMapping()
-        #        messages[msgid][lang] = msgstr
+            line = filehandler.readline()
 
-        # Set the encoding (the full header should be loaded XXX)
-        #self.update_po_header(lang, charset=po.get_encoding())
+        filehandler.close()
+        for (msgid, msgstr) in data.items():
+            # TODO: do not replace with empty messages
+            self._catalog.edit_message(
+                               self.backslash_unescape(msgid).decode(encoding),
+                               lang,
+                               self.backslash_unescape(msgstr).decode(encoding))
