@@ -3,11 +3,8 @@
 
 # Zope imports
 from Globals import PersistentMapping
-from OFS.SimpleItem import SimpleItem
 from Persistence import Persistent
-from ZPublisher import HTTPRequest
 from zope.interface import implements
-from zope.app.component.hooks import getSite
 
 # Product imports
 from interfaces import INyTranslationCatalog
