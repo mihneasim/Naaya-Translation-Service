@@ -10,8 +10,6 @@ from zope.i18n import interpolate
 from zope.i18n.interfaces import ITranslationDomain
 from zope.component import queryUtility
 from zope.deprecation import deprecate
-#from zope.app.component.hooks import getSite
-from patches import getNySite as getSite
 from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from Acquisition import Implicit
@@ -111,10 +109,7 @@ class TranslationsToolWrapper(Implicit):
         Returns the languages mapping without the English language.
         Remove the entry for the 'code' = 'en'.
         """
-        try:
-            i18n = self.getSite().getPortalI18n()
-        except AttributeError:
-            i18n = getSite().getPortalI18n()
+        i18n = self.getSite().getPortalI18n()
         return [{'code': x,
                  'name': i18n.get_language_name(x),
                  'default': False}
@@ -159,9 +154,6 @@ class TranslationsToolWrapper(Implicit):
         """ use getPortalTranslations instance as gettext callable """
         return self.gettext(message, lang, add, default)
 
-    #def __getattr__(self, name):
-    #    import pdb; pdb.set_trace()
-    #    return getattr(self.catalog, name)
 
     ## used to be in Localizer/MessageCatalog
     # In Naaya: Session messages are translated using this

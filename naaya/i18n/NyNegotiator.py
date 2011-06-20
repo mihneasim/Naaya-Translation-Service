@@ -3,8 +3,7 @@
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
 from ZPublisher.Request import Request
-#from zope.app.component.hooks import getSite
-from patches import getNySite as getSite
+from patches import getRequest
 
 # Product imports
 from LanguageManagers import normalize_code
@@ -22,8 +21,8 @@ class NyNegotiator(object):
         """
         self.cookie_id = cookie_id
         self.request = request
-        if not isinstance(self.request, Request) and getSite() is not None:
-            self.request = getSite().REQUEST
+        if not isinstance(self.request, Request):
+            self.request = getRequest()
         self.set_policy(policy)
 
     def set_policy(self, policy):

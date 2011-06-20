@@ -7,9 +7,11 @@ from AccessControl import ClassSecurityInfo
 from Globals import InitializeClass
 from ExtensionClass import Base
 from zope.deprecation import deprecate
-#from zope.app.component.hooks import getSite
-from patches import getNySite as getSite
 
+# Product imports
+from patches import getRequest
+from NyNegotiator import NyNegotiator
+from LanguageManagers import NyLanguages
 
 class LocalAttribute(Base):
     """
@@ -116,14 +118,16 @@ class LocalPropertyManager(object):
             return ''
         # No language, look for the first non-empty available version or def.
         if lang is None:
-            i18n_tool = self.get_portal_i18n()
+            request = getRequest()
+            # TODO: is it ok to use default cookie_id?
+            neg = NyNegotiator(request=request)
             # need to negotiate lang based on available langs for this prop.
-            lang = i18n_tool.get_negotiator().\
-                getLanguage(self._local_properties[id].keys(), fallback=False)
+            lang = neg.getLanguage(self._local_properties[id].keys(),
+                                   fallback=False)
             if lang is None:
-                # eg: we ask default (en), id has only 'de', lang is the None
-                # because fallback=False (else would have been `de`)
-                lang = i18n_tool.get_portal_lang_manager().get_default_language()
+                # eg: we ask default (en), id has only 'de', lang is then None
+                # because fallback=False (or else it would have been `de`)
+                lang = request.i18n['default_language']
         if lang not in self._local_properties[id]:
             return ''
         value = self._local_properties[id][lang]
@@ -146,36 +150,36 @@ class LocalPropertyManager(object):
 
         return self.getLocalAttribute(id, lang)
 
-    security.declarePublic('get_portal_i18n')
-    def get_portal_i18n(self):
+    security.declarePublic('get_selected_language')
+    #@deprecate(("Calling language related methods on objects is deprecated."
+    #            " Call them on NySite_instance.getPortalI18n() instead"))
+    def get_selected_language(self):
         """ """
-        if getSite() is not None:
-            # preferred, acquisiton may be overwritten, use hook before traversal
-            return getSite().getPortalI18n()
-        else:
-            # no traversal, use acquisition
-            return self.getSite().getPortalI18n()
+        return getRequest().i18n['selected_language']
+
 
     ### For compatibility with old property manager - for here/get_lang..
     security.declarePublic('get_languages_mapping')
-    @deprecate(("Calling language related methods on objects is deprecated."
+    @deprecate(("Calling language related methods like `get_languages_mapping`"
+                " on objects is deprecated."
                 " Call them on NySite_instance.getPortalI18n() instead"))
     def get_languages_mapping(self):
         """ """
-        return self.get_portal_i18n().get_languages_mapping()
+        return getRequest().i18n['languages_mapping']
 
     security.declarePublic('get_language_name')
-    @deprecate(("Calling language related methods on objects is deprecated."
+    @deprecate(("Calling language related methods like `get_language_name`"
+                " on objects is deprecated."
                 " Call them on NySite_instance.getPortalI18n() instead"))
     def get_language_name(self, lang):
-        """ """
-        return self.get_portal_i18n().get_language_name(lang)
+        """
+        Deprecated: Use gl_get_language_name on NySite or even better,
+        use get_language_name on getPortalI18n().get_portal_lang_manager()
+        This deprecated version can not return custom named languages
 
-    security.declarePublic('get_selected_language')
-    @deprecate(("Calling language related methods on objects is deprecated."
-                " Call them on NySite_instance.getPortalI18n() instead"))
-    def get_selected_language(self):
-        """ """
-        return self.get_portal_i18n().get_selected_language()
+        """
+        i18n_on_request = getRequest().i18n
+        return NyLanguages().get_language_name(lang)
+
 
 InitializeClass(LocalPropertyManager)

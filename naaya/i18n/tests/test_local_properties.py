@@ -14,7 +14,6 @@ from Products.Naaya.tests.NaayaFunctionalTestCase import NaayaFunctionalTestCase
 
 # Product imports
 from naaya.i18n.LocalPropertyManager import LocalAttribute
-from naaya.i18n.patches import setNySite
 
 
 class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
@@ -28,8 +27,6 @@ class LocalPropertyManagerTestSuite(NaayaFunctionalTestCase):
     def setUp(self):
         super(LocalPropertyManagerTestSuite, self).setUp()
         self.ob = self.portal.info.accessibility
-        # This is usualy made in Publish:
-        #setNySite(self.portal)
 
     def test_inexistent(self):
         self.assertRaises(AttributeError, self.assertAttrValue,
