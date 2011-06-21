@@ -72,6 +72,8 @@ class TestNySiteApi(NaayaTestCase):
                          DEFAULT_PORTAL_LANGUAGE_CODE)
         self.portal.gl_change_site_defaultlang('de')
         self.assertEqual(self.portal.gl_get_default_language(), 'de')
+        self.assertEqual(self.portal.getPortalI18n().get_message_catalog()\
+                         ._default_language, 'en')
 
     def test_get_selected_language(self):
         i18n = self.portal.getPortalI18n()

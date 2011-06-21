@@ -37,7 +37,7 @@ class NyMessageCatalog(Persistent):
 
         # Language Manager data
         self._languages = tuple(languages)
-        self._default_language = self._languages[0]
+        self._default_language = 'en' # self._languages[0]
 
         # Here the message translations are stored
         self._messages = PersistentMapping()
