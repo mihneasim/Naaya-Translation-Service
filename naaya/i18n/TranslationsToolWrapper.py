@@ -27,15 +27,13 @@ class TranslationsToolWrapper(Implicit):
         self.portal_i18n = portal_i18n
 
     security.declarePublic('get_msg_translations')
+    @deprecate(("Portal Translations/get_msg_translations is deprecated, use "
+                "portal/getPortalI18n/get_message_translation"))
     def get_msg_translations(self, message='', lang=''):
         """
         Returns the translation of the given message in the given language.
         """
-        if message == '':
-            return None
-        if not lang:
-            lang = self.portal_i18n.get_selected_language()
-        return self.catalog.gettext(message, lang, '')
+        return self.portal_i18n.get_message_translation(message, lang)
 
     security.declarePublic('msgEncode')
     def msgEncode(self, message):
@@ -46,20 +44,24 @@ class TranslationsToolWrapper(Implicit):
         return quote(message_encode(message))
 
     security.declarePublic('message_encode')
+    @deprecate(("Portal Translations/message_encode is deprecated, use "
+                "portal/getPortalI18n/message_encode"))
     def message_encode(self, message):
         """ Encodes a message to an ASCII string.
             To be used in the user interface, to avoid problems with the
             encodings, HTML entities, etc..
         """
-        return message_encode(message)
+        return self.portal_i18n.message_encode(message)
 
     security.declarePublic('message_decode')
+    @deprecate(("Portal Translations/message_decode is deprecated, use "
+                "portal/getPortalI18n/message_decode"))
     def message_decode(self, message):
         """ Decodes a message from an ASCII string.
             To be used in the user interface, to avoid problems with the
             encodings, HTML entities, etc..
         """
-        return message_decode(message)
+        return self.portal_i18n.message_decode(message)
 
     security.declareProtected('Manage messages', 'tt_get_messages')
     def tt_get_messages(self, query, skey, rkey):
@@ -136,24 +138,23 @@ class TranslationsToolWrapper(Implicit):
             not_translated_messages[lang['code']] = mesg_count
         return not_translated_messages
 
-    security.declarePublic('gettext')
+    security.declarePublic('trans')
+    @deprecate(("Portal Translations/trans is deprecated, use "
+                "portal/getPortalI18n/get_translation"))
     def trans(self, msg, **kwargs):
         """ Translate message and interpolate using kwargs mapping """
-        lang = self.portal_i18n.get_selected_language()
-        msg = self.catalog.gettext(msg, lang)
-        return interpolate(msg, kwargs)
+        return self.portal_i18n.get_translation(msg, **kwargs)
 
     security.declarePublic('gettext')
+    @deprecate(("Portal Translations/gettext is deprecated, use "
+                "portal/getPortalI18n/get_message_translation"))
     def gettext(self, message, lang=None, add=1, default=None):
-        if not lang:
-            lang = self.portal_i18n.get_selected_language()
-        return self.catalog.gettext(message, lang, default)
+        return self.portal_i18n.get_message_translation(message, lang, default)
 
-    security.declarePublic('gettext')
+    security.declarePublic('__call__')
     def __call__(self, message, lang=None, add=1, default=None):
         """ use getPortalTranslations instance as gettext callable """
         return self.gettext(message, lang, add, default)
-
 
     ## used to be in Localizer/MessageCatalog
     # In Naaya: Session messages are translated using this

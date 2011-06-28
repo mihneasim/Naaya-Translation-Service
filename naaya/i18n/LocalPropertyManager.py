@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+
 # Python imports
 from time import time
 
@@ -9,7 +10,7 @@ from ExtensionClass import Base
 from zope.deprecation import deprecate
 
 # Product imports
-from patches import getRequest
+from patches import get_request, get_i18n_context
 from NyNegotiator import NyNegotiator
 from LanguageManagers import NyLanguages
 
@@ -46,12 +47,13 @@ class LocalPropertyManager(object):
     # Example: {'title': {'en': ('Title', timestamp), 'es': ('Títul', timestamp)}}
     _local_properties = {}
 
-    # Useful to find or index all LPM instances
-    isLocalPropertyManager = 1
+    # OBS!: _local_properties* will be saved on instance when first changed
+
 
     security.declarePublic('hasLocalProperty')
     def hasLocalProperty(self, id):
-        """Return true if object has a property 'id'"""
+        """Return true if object has a property 'id' (it's present in
+        _local_properties_metadata)"""
         for property in self._local_properties_metadata:
             if property['id'] == id:
                 return True
@@ -59,11 +61,17 @@ class LocalPropertyManager(object):
 
     security.declareProtected('Manage properties', 'set_localpropvalue')
     def set_localpropvalue(self, id, lang, value):
+        """
+        Sets value in a given lang for a given property name (id).
+        If property does not exist (it's not present in
+        _local_properties_metadata), then create it with type 'string'
+
+        """
         # Get previous value
         old_value = self.getLocalAttribute(id, lang)
         # Update value only if it is different or new
         if not self.hasLocalProperty(id):
-            self.set_localproperty(id, str(type(value)), lang, value)
+            self.set_localproperty(id, 'string', lang, value)
         elif value != old_value:
             properties = self._local_properties.copy()
             if not properties.has_key(id):
@@ -75,7 +83,12 @@ class LocalPropertyManager(object):
 
     security.declareProtected('Manage properties', 'set_localproperty')
     def set_localproperty(self, id, type, lang=None, value=None):
-        """Adds a new local property"""
+        """
+        Adds a new local property:
+         * adds type and id to _local_properties_metadata
+         * adds value for lang only if lang is not None and value is not None
+
+        """
         if not self.hasLocalProperty(id):
             self._local_properties_metadata += ({'id': id, 'type': type},)
             setattr(self, id, LocalProperty(id))
@@ -118,16 +131,19 @@ class LocalPropertyManager(object):
             return ''
         # No language, look for the first non-empty available version or def.
         if lang is None:
-            request = getRequest()
-            # TODO: is it ok to use default cookie_id?
-            neg = NyNegotiator(request=request)
-            # need to negotiate lang based on available langs for this prop.
-            lang = neg.getLanguage(self._local_properties[id].keys(),
-                                   fallback=False)
+            request = get_request()
+            i18n = get_i18n_context()
+            if i18n is None: # didn't traverse any portal yet, e.g. zmi root
+                lang = 'en'
+            else:
+                neg = NyNegotiator(request=request, cookie_id=i18n['cookie_id'])
+                # need to negotiate lang based on available langs for this prop.
+                lang = neg.getLanguage(self._local_properties[id].keys(),
+                                       fallback=False)
             if lang is None:
                 # eg: we ask default (en), id has only 'de', lang is then None
                 # because fallback=False (or else it would have been `de`)
-                lang = request.i18n['default_language']
+                lang = i18n['default_language']
         if lang not in self._local_properties[id]:
             return ''
         value = self._local_properties[id][lang]
@@ -155,7 +171,7 @@ class LocalPropertyManager(object):
     #            " Call them on NySite_instance.getPortalI18n() instead"))
     def get_selected_language(self):
         """ """
-        return getRequest().i18n['selected_language']
+        return get_i18n_context()['selected_language']
 
 
     ### For compatibility with old property manager - for here/get_lang..
@@ -165,7 +181,7 @@ class LocalPropertyManager(object):
                 " Call them on NySite_instance.getPortalI18n() instead"))
     def get_languages_mapping(self):
         """ """
-        return getRequest().i18n['languages_mapping']
+        return get_i18n_context()['languages_mapping']
 
     security.declarePublic('get_language_name')
     @deprecate(("Calling language related methods like `get_language_name`"
@@ -178,7 +194,6 @@ class LocalPropertyManager(object):
         This deprecated version can not return custom named languages
 
         """
-        i18n_on_request = getRequest().i18n
         return NyLanguages().get_language_name(lang)
 
 

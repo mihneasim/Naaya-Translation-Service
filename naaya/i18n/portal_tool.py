@@ -24,6 +24,9 @@ from NyMessageCatalog import NyMessageCatalog
 from NyNegotiator import NyNegotiator
 from interfaces import INyTranslationCatalog
 from ImportExport import TranslationsImportExport
+from patches import populate_threading_local, get_i18n_context, get_request
+from ExternalService import external_translate
+
 
 # used by get_namespace mainly (to prefill dtml vars)
 def to_unicode(x):
@@ -84,6 +87,9 @@ def manage_addNaayaI18n(self, languages=[('en', 'English')],
     """
     self._setObject(ID_NAAYAI18N,
                     NaayaI18n(ID_NAAYAI18N, TITLE_NAAYAI18N, languages))
+    req = REQUEST or self.REQUEST
+    if req is not None:
+        populate_threading_local(self, req)
 
     if REQUEST is not None:
         RESPONSE.redirect('manage_main')
@@ -109,6 +115,7 @@ class NaayaI18n(Folder):
         self._catalog = catalog
 
     def get_negotiator(self):
+        """ Return NyNegotiator instance, based on current request """
         try:
             return NyNegotiator(request=self.getSite().REQUEST)
         except AttributeError:
@@ -116,21 +123,45 @@ class NaayaI18n(Folder):
             return NyNegotiator()
 
     def get_message_catalog(self):
+        """
+        Returns Message Catalog (NyMessageCatalog instance).
+        The Message Catalog stores translations for all messages.
+
+        """
         return self._catalog
 
     def get_lang_manager(self):
+        """
+        Returns a NyLanguages instance, capable of managing
+        a list of ISO 639 language code and names, based on languages.txt
+        in naaya.i18n
+
+        """
         if not hasattr(self, 'lang_manager'):
             self.lang_manager = NyLanguages()
         return self.lang_manager
 
     def get_portal_lang_manager(self):
+        """
+        Returns NyPortalLanguageManager instance in portal, capable
+        of managing available languages
+
+        """
         return self._portal_langs
 
     def get_importexport_tool(self):
+        """ Returns the import-export wrapper for Message Catalog """
         return TranslationsImportExport(self.get_message_catalog())
 
     ### More specific methods:
     def get_language_name(self, code):
+        """
+        Get the language name for 'code'. It first looks up
+        languages manually added in portal, then asks for languages
+        in NyLanguages (naaya.i18n/languages.txt) which finally falls back
+        to '???' string
+
+        """
         if code in self.get_portal_lang_manager().getAvailableLanguages():
             # try to get name from added langs to site
             return self.get_portal_lang_manager().get_language_name(code)
@@ -138,10 +169,13 @@ class NaayaI18n(Folder):
             # not there, default to NyLanguages: loads the large languages.txt
             return self.get_lang_manager().get_language_name(code)
 
+    security.declarePublic('get_languages_mapping')
     def get_languages_mapping(self):
-        """ Returns
+        """
+        Returns
         [{'code': 'xx', 'name': 'Xxx xx', default: True/False}, .. ]
         for languages currently available in portal
+
         """
         langs = list(self._portal_langs.getAvailableLanguages())
         langs.sort()
@@ -154,6 +188,13 @@ class NaayaI18n(Folder):
         return result
 
     def add_language(self, lang_code, lang_name=None):
+        """
+        Adds a new supported language in portal_i18n.
+        Language code, language name can be any combination.
+        If language name is not provided,
+        a lookup is being performed in naaya.i18n/languages.txt
+
+        """
         if not lang_code:
             raise ValueError('No language code provided')
         lang_code = normalize_code(lang_code)
@@ -166,15 +207,23 @@ class NaayaI18n(Folder):
         self._catalog.add_language(lang_code)
 
     def del_language(self, lang):
+        """
+        Deletes a language from portal_i18n:
+         * removes it from available languages
+         * removes it from supported languages in message catalog
+
+        """
         self._portal_langs.delAvailableLanguage(lang)
         self._catalog.del_language(lang)
 
     def get_selected_language(self, context=None):
+        """ Performs negotiation and returns selected languag based on context
+        or finds context using threading.local patch """
         return self.get_negotiator().getLanguage(
                             self._portal_langs.getAvailableLanguages(), context)
 
     def change_selected_language(self, lang, goto=None, expires=None):
-        """ """
+        """ Sets a cookie with a new preferred selected language """
         request = self.REQUEST
         response = request.RESPONSE
         negotiator = self.get_negotiator()
@@ -193,6 +242,54 @@ class NaayaI18n(Folder):
 
         response.redirect(goto)
 
+    ### Public i18n related methods
+    security.declarePublic('get_message_translation')
+    def get_message_translation(self, message='', lang=None, default=None):
+        """
+        Returns the translation of the given message in the given language,
+        as it is stored in Message Catalog (no interpolation).
+
+        """
+        if message == '':
+            return None
+        if not lang:
+            lang = self.get_selected_language()
+        return self.get_message_catalog().gettext(message, lang, default)
+
+    security.declarePublic('get_translation')
+    def get_translation(self, msg, **kwargs):
+        """
+        Translate message using Message Catalog
+        and substitute named identifiers with values supplied by kwargs mapping
+
+        """
+        lang = self.get_selected_language()
+        msg = self.get_message_catalog().gettext(msg, lang)
+        return interpolate(msg, kwargs)
+
+    ### Public general purpose methods
+    security.declarePublic('message_decode')
+    def message_decode(self, message):
+        """ Decode the encoded message (for url passing) """
+        return message_decode(message)
+
+    security.declarePublic('message_decode')
+    def message_encode(self, message):
+        """ Decode the encoded message (for url passing) """
+        return message_encode(message)
+
+    ### Private methods for private views
+
+    security.declareProtected('Manage messages', 'manage_messages')
+    def external_translate(self, message, target_lang):
+        """
+        Private method that returns a translation based on an external
+        service, e.g. Google Translate. Not public because the number of
+        requests must not be abusive
+
+        """
+        return external_translate(message, target_lang)
+
     #######################################################################
     # Management screens
     #######################################################################
@@ -202,17 +299,13 @@ class NaayaI18n(Folder):
             {'label': u'Messages', 'action': 'manage_messages'},
             {'label': u'Languages', 'action': 'manage_languages'},
             {'label': u'Import', 'action': 'manage_import'
-             #,'help': ('Localizer', 'MC_importExport.stx')
             },
             {'label': u'Export', 'action': 'manage_export'
-             #,'help': ('Localizer', 'MC_importExport.stx')
             }) \
             + SimpleItem.manage_options
-            #+ LanguageManager.manage_options \
         r = []
         for option in options:
             option = option.copy()
-            #option['label'] = _(option['label'])
             r.append(option)
         return r
 

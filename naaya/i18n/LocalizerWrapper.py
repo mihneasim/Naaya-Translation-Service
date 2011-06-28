@@ -8,7 +8,10 @@ from zope.component import adapts
 from Persistence import Persistent
 
 # Naaya imports
-from Products.NaayaCore.constants import ID_TRANSLATIONSTOOL
+try:
+    from Products.NaayaCore.constants import ID_TRANSLATIONSTOOL
+except ImportError:
+    ID_TRANSLATIONSTOOL = 'portal_translations'
 
 # Product imports
 from naaya.i18n.interfaces import (INyTranslationCatalog, INyLanguageManagement)

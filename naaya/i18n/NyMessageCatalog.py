@@ -6,6 +6,9 @@ from Globals import PersistentMapping
 from Persistence import Persistent
 from zope.interface import implements
 
+# Naaya imports
+from naaya.core.utils import force_to_unicode
+
 # Product imports
 from interfaces import INyTranslationCatalog
 
@@ -37,6 +40,11 @@ class NyMessageCatalog(Persistent):
 
         # Language Manager data
         self._languages = tuple(languages)
+
+        # We suppose all zope/portal products are written in English
+        # therefore we consider all new messages in English
+        # Default language in Catalog is always 'en', thus it can be different
+        # from the default language of the portal
         self._default_language = 'en' # self._languages[0]
 
         # Here the message translations are stored
@@ -68,7 +76,7 @@ class NyMessageCatalog(Persistent):
         # saving everything unicode, utf-8
         elif isinstance(msgid, str):
             msgstr = msgid
-            msgid = msgid.decode('utf-8')
+            msgid = force_to_unicode(msgid)
         if not lang:
             raise ValueError("No language provided for gettext")
         msgid = msgid.strip()

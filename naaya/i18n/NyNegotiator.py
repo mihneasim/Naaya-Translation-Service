@@ -3,7 +3,7 @@
 from zope.i18n.interfaces import INegotiator
 from zope.interface import implements
 from ZPublisher.Request import Request
-from patches import getRequest
+from patches import get_request
 
 # Product imports
 from LanguageManagers import normalize_code
@@ -22,7 +22,7 @@ class NyNegotiator(object):
         self.cookie_id = cookie_id
         self.request = request
         if not isinstance(self.request, Request):
-            self.request = getRequest()
+            self.request = get_request()
         self.set_policy(policy)
 
     def set_policy(self, policy):

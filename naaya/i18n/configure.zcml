@@ -15,4 +15,10 @@
       name="default"
       />
 
+   <naaya:utility
+      name="LocalizerToNaayaI18n.update"
+      provides="Products.naayaUpdater.interfaces.IUpdateScript"
+      component=".updates.LocalizerToNaayaI18n"
+      permission="zope2.ViewManagementScreens" />
+
 </configure>

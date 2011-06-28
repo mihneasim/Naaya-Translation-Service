@@ -1,13 +1,14 @@
 
 # Python imports
+import threading
 import logging
 logger = logging.getLogger(__name__)
 
 # Zope imports
-import zope.thread
 from zope.component import adapts
 from zope.publisher.interfaces import IRequest
 from ZPublisher.BaseRequest import DefaultPublishTraverse
+import zope.thread
 
 # Naaya imports
 from Products.Naaya.interfaces import INySite
@@ -20,47 +21,57 @@ class NySitePublishTraverse(DefaultPublishTraverse):
         """
         There are 2 patches made on publish:
         * setting Request thread local and adding some i18n-related attributes
-        on it. Useful for i18n operations when OFS context is unavailable.
+        on thread. Useful for i18n operations when OFS context is unavailable.
         * hook for changing language by entering its code in url, after INySite
 
         """
         portal = self.context
         portal_i18n = portal.getPortalI18n()
-        lang_manager = portal_i18n.get_portal_lang_manager()
 
         # set Request on thread.local and append i18n info on it
-        patch_request(portal)
+        populate_threading_local(portal, request)
+
         if portal_i18n is not None:
+            lang_manager = portal_i18n.get_portal_lang_manager()
             if name in lang_manager.getAvailableLanguages():
                 request[portal_i18n.get_negotiator().cookie_id] = name
                 # update selected language, it may be the one found in url
-                request.i18n['selected_language'] = portal_i18n.get_selected_language()
+                i18n = get_i18n_context()
+                i18n['selected_language'] = portal_i18n.get_selected_language()
+
                 return portal
+
         return super(NySitePublishTraverse, self).publishTraverse(request, name)
 
-def patch_request(portal):
-    '''
-     * Append i18n info required on request, when OFS context is unavailable
-     * Put request on thread.local
 
-    '''
+def populate_threading_local(portal, request):
+    """
+     * Append i18n info on local thread, when OFS context is unavailable
+     * Append request on local thread, when request/acquisition is unavailable
+    """
     portal_i18n = portal.getPortalI18n()
-    request = portal.REQUEST
-    lang_manager = portal_i18n.get_portal_lang_manager()
-    request.i18n = {}
-    request.i18n['default_language'] = lang_manager.get_default_language()
-    request.i18n['languages_mapping'] = portal_i18n.get_languages_mapping()
-    request.i18n['selected_language'] = portal_i18n.get_selected_language()
-    setRequest(request)
+    if portal_i18n is not None:
+        lang_manager = portal_i18n.get_portal_lang_manager()
+        i18n = {}
+        i18n['default_language'] = lang_manager.get_default_language()
+        i18n['languages_mapping'] = portal_i18n.get_languages_mapping()
+        i18n['selected_language'] = portal_i18n.get_selected_language()
+        i18n['cookie_id'] = portal_i18n.get_negotiator().cookie_id
+        set_i18n_context(i18n)
 
-class NySiteInfo(zope.thread.local):
-    #request = None
-    pass
+    set_request(request)
 
-nysiteinfo = NySiteInfo()
 
-def setRequest(request):
-    nysiteinfo.request = request
+thread_data = threading.local()
 
-def getRequest():
-    return nysiteinfo.request
+def set_request(request):
+    thread_data.request = request
+
+def get_request():
+    return getattr(thread_data, 'request', None)
+
+def set_i18n_context(i18n):
+    thread_data.i18n = i18n
+
+def get_i18n_context():
+    return getattr(thread_data, 'i18n', None)
