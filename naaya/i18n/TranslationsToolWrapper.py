@@ -15,7 +15,6 @@ from Globals import InitializeClass
 from Acquisition import Implicit
 
 # Product imports
-from portal_tool import message_encode, message_decode
 from LanguageManagers import NyLanguages
 
 class TranslationsToolWrapper(Implicit):
@@ -41,7 +40,7 @@ class TranslationsToolWrapper(Implicit):
         Encodes a message in order to be passed as parameter in
         the query string.
         """
-        return quote(message_encode(message))
+        return quote(self.portal_i18n.message_encode(message))
 
     security.declarePublic('message_encode')
     @deprecate(("Portal Translations/message_encode is deprecated, use "

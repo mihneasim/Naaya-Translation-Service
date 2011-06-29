@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 from zope.component import adapts
 from zope.publisher.interfaces import IRequest
 from ZPublisher.BaseRequest import DefaultPublishTraverse
-import zope.thread
 
 # Naaya imports
 from Products.Naaya.interfaces import INySite
+
 
 class NySitePublishTraverse(DefaultPublishTraverse):
     adapts(INySite, IRequest)

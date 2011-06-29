@@ -8,9 +8,17 @@ from urllib import quote
 from OFS.Folder import Folder
 from OFS.SimpleItem import SimpleItem
 from AccessControl import ClassSecurityInfo
-from Globals import DTMLFile
 from ZPublisher import HTTPRequest
-from zope.app.i18n import ZopeMessageFactory as _
+try:
+    # Zope 2.12
+    from zope.i18nmessageid import ZopeMessageFactory as _
+    from App.special_dtml import DTMLFile
+    from App.class_init import InitializeClass
+except ImportError:
+    # Zope <= 2.11
+    from zope.app.i18n import ZopeMessageFactory as _
+    from Globals import DTMLFile
+    from Globals import InitializeClass
 from AccessControl.Permissions import view_management_screens
 from Products.PageTemplates.PageTemplateFile import PageTemplateFile
 
@@ -40,28 +48,6 @@ def to_unicode(x):
 
 def filter_sort(x, y):
     return cmp(to_unicode(x), to_unicode(y))
-
-def message_encode(message):
-    """Encodes a message to an ASCII string.
-
-    To be used in the user interface, to avoid problems with the
-    encodings, HTML entities, etc..
-    """
-    if isinstance(message, unicode):
-        encoding = HTTPRequest.default_encoding
-        message = message.encode(encoding)
-
-    return encodestring(message)
-
-def message_decode(message):
-    """Decodes a message from an ASCII string.
-
-    To be used in the user interface, to avoid problems with the
-    encodings, HTML entities, etc..
-    """
-    message = decodestring(message)
-    encoding = HTTPRequest.default_encoding
-    return unicode(message, encoding)
 
 def get_url(url, batch_start, batch_size, regex, lang, empty, **kw):
     params = []
@@ -96,6 +82,15 @@ def manage_addNaayaI18n(self, languages=[('en', 'English')],
 
 
 class NaayaI18n(Folder):
+    """
+    Naaya instantiates a **NaayaI18n** object insides its root. This object
+    holds the whole internationalization data and operations:
+    - management of languages
+    - negotiation
+    - translating and translation data
+    - management of object property localization
+
+    """
 
     meta_type = METATYPE_NAAYAI18N
     icon = 'misc_/portal_i18n/icon.gif'
@@ -270,13 +265,31 @@ class NaayaI18n(Folder):
     ### Public general purpose methods
     security.declarePublic('message_decode')
     def message_decode(self, message):
-        """ Decode the encoded message (for url passing) """
-        return message_decode(message)
+        """
+        Decodes a message from an ASCII string.
+
+        To be used in the user interface, to avoid problems with the
+        encodings, HTML entities, etc..
+
+        """
+        message = decodestring(message)
+        encoding = HTTPRequest.default_encoding
+        return unicode(message, encoding)
 
     security.declarePublic('message_decode')
     def message_encode(self, message):
-        """ Decode the encoded message (for url passing) """
-        return message_encode(message)
+        """
+        Encodes a message to an ASCII string.
+
+        To be used in the user interface, to avoid problems with the
+        encodings, HTML entities, etc..
+
+        """
+        if isinstance(message, unicode):
+            encoding = HTTPRequest.default_encoding
+            message = message.encode(encoding)
+    
+        return encodestring(message)
 
     ### Private methods for private views
 
@@ -379,10 +392,10 @@ class NaayaI18n(Folder):
                 translation = self.get_message_catalog()\
                                   .gettext(message, lang, '')
                 message = to_unicode(message)
-                message_encoded = message_encode(message)
+                message_encoded = self.message_encode(message)
         else:
             message_encoded = message
-            message = message_decode(message_encoded)
+            message = self.message_decode(message_encoded)
             #translations = self.get_translations(message)
             translation = self.get_message_catalog().gettext(message, lang, '')
             message = to_unicode(message)
@@ -395,7 +408,7 @@ class NaayaI18n(Folder):
         namespace['messages'] = []
         for x in messages:
             x = to_unicode(x)
-            x_encoded = message_encode(x)
+            x_encoded = self.message_encode(x)
             url = get_url(
                 REQUEST.URL, batch_start, batch_size, regex, lang, empty,
                 msg=x_encoded)
@@ -424,7 +437,7 @@ class NaayaI18n(Folder):
         """Modifies a message.
         """
         message_encoded = message
-        message_key = message_decode(message_encoded)
+        message_key = self.message_decode(message_encoded)
         self.get_message_catalog()\
             .edit_message(message_key, language, translation)
 
@@ -439,7 +452,7 @@ class NaayaI18n(Folder):
     security.declareProtected('Manage messages', 'manage_delMessage')
     def manage_delMessage(self, message, REQUEST, RESPONSE):
         """ """
-        message_key = message_decode(message)
+        message_key = self.message_decode(message)
         self.get_message_catalog().del_message(message_key)
 
         url = get_url(REQUEST.URL1 + '/manage_messages',
@@ -546,3 +559,5 @@ class NaayaI18n(Folder):
     security.declareProtected(view_management_screens, 'manage_import_xliff')
     def manage_import_xliff(self, file, language, REQUEST, RESPONSE):
         raise NotImplementedError("Xliff import is not yet implemented")
+
+InitializeClass(NaayaI18n)

@@ -8,7 +8,7 @@ import urllib2
 from urllib import urlencode
 import re
 
-DUMMY_TEXT = "'XXXXX'" # google tends to change other wildcards like ${}
+DUMMY_TEXT = "XXXXX" # google tends to change other wildcards like ${}
 REQUEST_URI = 'http://translate.google.com/translate_a/t'
 
 def external_translate(message, target_lang):
@@ -21,6 +21,12 @@ def external_translate(message, target_lang):
 
     """
     try:
+        # Replace mappings, if any
+        mappings_pat = re.compile(r'\$\{(.*?)\}')
+        mappings = mappings_pat.findall(message)
+        if mappings is not []:
+            message = mappings_pat.sub(DUMMY_TEXT, message)
+
         op = urllib2.build_opener()
         op.addheaders = [('User-agent', 'Mozilla/5.0')]
         handler = op.open(REQUEST_URI,
@@ -31,16 +37,11 @@ def external_translate(message, target_lang):
         jsonize_pat = re.compile(',,')
         while jsonize_pat.search(body) is not None:
             body = jsonize_pat.sub(r',"",', body)
-        # Replace mappings, if any
-        mappings_pat = re.compile(r'\$\{(.*?)\}')
-        mappings = mappings_pat.findall(body)
-        if mappings is not []:
-            mappings_pat.sub(DUMMY_TEXT, body)
 
         json_data = json.loads(body)
 
         try:
-            translation = json_data[0][0][0]
+            translation = ''.join([ x[0] for x in json_data[0] ])
         except KeyError:
             # no translation or unexpected response
             return ''

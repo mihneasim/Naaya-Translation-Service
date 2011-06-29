@@ -2,7 +2,12 @@
 # Python imports
 
 # Zope imports
-from Globals import PersistentMapping
+try:
+    # zope 2.12
+    from Persistence import PersistentMapping
+except ImportError:
+    # zope <= 2.11
+    from Globals import PersistentMapping
 from Persistence import Persistent
 from zope.interface import implements
 

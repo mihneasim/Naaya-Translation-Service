@@ -17,9 +17,9 @@ Selecting the default language
 The *default language* is the language the portal is first displayed in,
 when the user either has no localization preferences set or the default
 language is within his preferred languages. This is also the default fallback
- language.
+language.
 
 This setting does not influence the default translation for new found strings.
- Each new found message without translation is still considered English,
- since most of the Naaya and Zope products are edited so.
+Each new found message without translation is still considered English,
+since most of the Naaya and Zope products are edited so.
 

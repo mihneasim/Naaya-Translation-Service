@@ -1,17 +1,13 @@
-.. naaya.i18n documentation master file, created by
-   sphinx-quickstart on Tue Jun 28 16:08:09 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 naaya.i18n's documentation
 ======================================
-**naaya.i18n** is a required dependency module for **Naaya** content management system.
- It is responsible for management of localized data and portal i18n related issues.
- This document refers to version |release|.
+**naaya.i18n** is a required dependency module for **Naaya** content management
+system. It is responsible for management of localized data and portal i18n
+related issues. This document refers to version |release|.
 
 Manager's Guide
 ---------------
-See what you need to know about internationalization if you are a Naaya portal manager.
+See what you need to know about internationalization if you are a Naaya
+portal manager.
 
 .. toctree::
     :maxdepth: 2

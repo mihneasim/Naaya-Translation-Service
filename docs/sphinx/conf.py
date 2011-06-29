@@ -217,3 +217,22 @@ man_pages = [
     ('index', 'naayai18n', u'naaya.i18n Documentation',
      [u'Mihnea Simian'], 1)
 ]
+
+### Custom Naaya related handlers ###
+def skip_zope_related_members(app, what, name, obj, skip, options):
+    """
+    Currently skips security related methods added by ClassSecurityInfo.
+    See http://sphinx.pocoo.org/ext/autodoc.html#event-autodoc-skip-member
+
+    """
+    if skip:
+        # do not "redempt" previously skipped members by autodoc
+        return True
+    elif name.endswith('__roles__'):
+        return True
+    else:
+        return False
+
+def setup(app):
+    app.connect('autodoc-skip-member', skip_zope_related_members)
+

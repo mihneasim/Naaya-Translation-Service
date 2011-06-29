@@ -3,14 +3,14 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
-SPHINXBUILD   = sphinx-build
+SPHINXBUILD = /home/mihnea/envs/n12/bin/sphinx-build
 PAPER         =
-BUILDDIR      = _build
+BUILDDIR      = /home/mihnea/envs/n12/var/docs/naaya.i18n
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) /home/mihnea/envs/n12/src/naaya.i18n/docs/sphinx
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
@@ -72,17 +72,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/naayai18n.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/naaya-docs.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/naayai18n.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/naaya-docs.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/naayai18n"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/naayai18n"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/naaya-docs"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/naaya-docs"
 	@echo "# devhelp"
 
 epub:
